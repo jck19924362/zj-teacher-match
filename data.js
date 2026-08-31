@@ -1,5 +1,6 @@
-// 浙江省教师招聘数据（2026届公告，共81条：小学65条 + 初中/高中/幼儿园第二批16条）
+// 浙江省教师招聘数据（2026届公告，共91条：小学65条 + 初中/高中/幼儿园第二批16条 + 特殊教育专项10条）
 // 数据来源：各地教育局/政府官网公告，检索整理 2026-08-31
+// 特殊教育说明：特教岗无独立学段，本项目统一归入「小学」学段 tab（id 82-91）
 // rules 字段说明：
 //   stage: 学段（"小学" / "中学" / "幼儿园、小学" 等，含即显示）
 //   hukou: "none"=不限 / "zhejiang"=浙江省 / 具体市或区县名 / "unknown"=待核实
@@ -751,4 +752,95 @@ const JOBS = [
     condition: "面向2026届全国普通高校毕业生；具体学历/户籍/荣誉条件详见公告及岗位表",
     url: "http://kfq.jinhua.gov.cn/art/2025/10/27/art_1229098077_4306561.html",
     rules: { stage: "小学、中学、幼儿园", hukou: "unknown", needMaster: false, schoolGate: null, honorGate: "unknown", certLevel: "unknown", audience: "fresh" } },
+
+  // ============ 特殊教育专项（2026年，共10条；特教岗归入小学学段 tab） ============
+  { id: 82, city: "温州市", district: "瑞安市", batch: "提前批", early: true, stage: "小学",
+    title: "瑞安市特殊教育学校面向2026届毕业生提前批招聘特教教师公告",
+    posts: "瑞安市特殊教育学校 特教教师",
+    count: "1名",
+    staffing: "事业编", enroll: "详见公告（提前批，2025年9-12月发布）", exam: "特殊教育专业知识笔试 + 试讲/模拟上课",
+    condition: "2026届应届本科及以上并具学士学位；专业口径宽，接受特殊教育学、教育康复学、康复治疗学、心理学类等相关专业；须特殊教育学科教资（应届可凭国考合格证明）",
+    url: "http://www.ruian.gov.cn/",
+    rules: { subjects: ["特殊教育"], stage: "小学", hukou: "unknown", needMaster: false, schoolGate: null, honorGate: null, certLevel: "any", audience: "fresh" } },
+
+  { id: 83, city: "温州市", district: "泰顺县", batch: "提前批", early: true, stage: "小学",
+    title: "泰顺县2026年提前批公开招聘教师公告（含特教岗位）",
+    posts: "泰顺县特殊教育岗位（含于15人计划中）",
+    count: "特教岗位（含于15名总计划内）",
+    staffing: "事业编", enroll: "详见公告（提前批）", exam: "特殊教育专业知识 + 面试",
+    condition: "本科或硕士研究生；38周岁以下；专业及教资要求详见岗位表",
+    url: "http://www.ts.gov.cn/",
+    rules: { subjects: ["特殊教育"], stage: "小学", hukou: "unknown", needMaster: false, schoolGate: null, honorGate: null, certLevel: "any", audience: "fresh" } },
+
+  { id: 84, city: "杭州市", district: "西湖区", batch: "提前批", early: true, stage: "小学",
+    title: "杭州紫荆花学校（西湖区特殊教育学校）教师招聘公告",
+    posts: "杭州紫荆花学校 特教教师",
+    count: "若干名",
+    staffing: "非编合同制（同工同酬，表现优秀优先入编）", enroll: "详见公告", exam: "特殊教育专业知识 + 试讲",
+    condition: "须硕士研究生；特殊教育类、康复类专业；非编合同制，同工同酬且有优先入编通道",
+    url: "https://www.hzxh.gov.cn/",
+    rules: { subjects: ["特殊教育"], stage: "小学", hukou: "unknown", needMaster: true, schoolGate: null, honorGate: null, certLevel: "any", audience: "fresh" } },
+
+  { id: 85, city: "杭州市", district: "建德市", batch: "社招", early: false, stage: "小学",
+    title: "建德市2026年公开招聘中小学幼儿园教师公告（含特教教师2名）",
+    posts: "建德市特殊教育学校 特教教师",
+    count: "2名",
+    staffing: "事业编", enroll: "详见公告（社招，2026年3-7月）", exam: "特殊教育专业知识 + 面试",
+    condition: "本科及以上；应届生须浙江户籍，社会人员须建德户籍；须特殊教育学科教资",
+    url: "https://www.jiande.gov.cn/",
+    rules: { subjects: ["特殊教育"], stage: "小学", hukou: "zhejiang", needMaster: false, schoolGate: null, honorGate: null, certLevel: "any", audience: "fresh" } },
+
+  { id: 86, city: "杭州市", district: "富阳区", batch: "社招", early: false, stage: "小学",
+    title: "杭州市富阳区特殊教育学校2026年招聘教师公告",
+    posts: "富阳区特殊教育学校 特教教师",
+    count: "1名",
+    staffing: "事业编", enroll: "详见公告（社招）", exam: "特殊教育专业知识 + 试讲",
+    condition: "本科及以上；须特殊教育专业；须特殊教育学科教资",
+    url: "https://www.fuyang.gov.cn/",
+    rules: { subjects: ["特殊教育"], stage: "小学", hukou: "unknown", needMaster: false, schoolGate: null, honorGate: null, certLevel: "any", audience: "fresh" } },
+
+  { id: 87, city: "杭州市", district: "富阳区", batch: "社招", early: false, stage: "小学",
+    title: "浙江省盲人学校2026年公开招聘教师公告",
+    posts: "浙江省盲人学校（富阳）特教教师",
+    count: "1名",
+    staffing: "事业编", enroll: "详见公告（社招应届批次）", exam: "特殊教育专业知识 + 面试",
+    condition: "须硕士研究生且为特殊教育学专业；须特殊教育学科教资",
+    url: "https://www.fuyang.gov.cn/",
+    rules: { subjects: ["特殊教育"], stage: "小学", hukou: "unknown", needMaster: true, schoolGate: null, honorGate: null, certLevel: "any", audience: "fresh" } },
+
+  { id: 88, city: "温州市", district: "市直属", batch: "社招", early: false, stage: "小学",
+    title: "温州市特殊教育学校2026年公开招聘事业编教师公告",
+    posts: "温州市特殊教育学校 教师（语文/学科教学方向）",
+    count: "1名",
+    staffing: "事业编", enroll: "2026年7月（社招）", exam: "笔试40%+面试60%；备课60分钟+模拟课堂12分钟+结构化面试，面试合格线75分",
+    condition: "须硕士研究生；中国语言文学类、新闻传播学类、教育学类专业可报；须高中及以上学段相应学科教资；户籍不限",
+    url: "https://rlsbt.zj.gov.cn/",
+    rules: { subjects: ["特殊教育", "语文"], stage: "小学", hukou: "none", needMaster: true, schoolGate: null, honorGate: null, certLevel: "senior", audience: "fresh" } },
+
+  { id: 89, city: "宁波市", district: "海曙区", batch: "社招", early: false, stage: "小学",
+    title: "宁波市海曙区2026年第二批事业单位公开招聘工作人员公告（专曙优师·特教教师）",
+    posts: "海曙区 特教教师（第二批共52人）",
+    count: "1名",
+    staffing: "事业编", enroll: "详见公告（社招第二批）", exam: "特殊教育专业知识 + 面试",
+    condition: "本科及以上；具体要求详见公告岗位表",
+    url: "https://www.haishu.gov.cn/",
+    rules: { subjects: ["特殊教育"], stage: "小学", hukou: "unknown", needMaster: false, schoolGate: null, honorGate: null, certLevel: "any", audience: "fresh" } },
+
+  { id: 90, city: "绍兴市", district: "越城区", batch: "社招", early: false, stage: "小学",
+    title: "绍兴市越城区育才学校（培智/自闭症）2026年合同制教师招聘公告",
+    posts: "越城区育才学校 合同制教师（培智/自闭症方向）",
+    count: "4名",
+    staffing: "劳务派遣（合同制）", enroll: "2026年7月（社招）", exam: "面试为主",
+    condition: "门槛极低：有爱心、能接纳特殊儿童即可报考，无严格专业与教资限制；注意为劳务派遣非编岗位",
+    url: "https://www.sxyc.gov.cn/",
+    rules: { subjects: ["特殊教育"], stage: "小学", hukou: "unknown", needMaster: false, schoolGate: null, honorGate: null, certLevel: "unknown", audience: "fresh" } },
+
+  { id: 91, city: "杭州市", district: "浙江特殊教育职业学院", batch: "高校招聘", early: false, stage: "高校",
+    title: "浙江特殊教育职业学院2026年专任教师招聘公告",
+    posts: "高校专任教师（康复辅具、思政、体育等方向）",
+    count: "若干名",
+    staffing: "事业编（高校）", enroll: "2026年3月（高校招聘）", exam: "详见公告",
+    condition: "高校教师岗，一般要求硕士及以上；康复辅具、思政、体育等专业；不适合本科应届生报考，仅作数据留存",
+    url: "https://www.zcmu.edu.cn/",
+    rules: { subjects: [], stage: "高校", hukou: "none", needMaster: true, schoolGate: null, honorGate: null, certLevel: "unknown", audience: "fresh" } },
 ];
