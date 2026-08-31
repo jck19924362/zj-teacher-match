@@ -104,17 +104,50 @@ const STAGE_CERT_LEVEL = { '幼儿园': 1, '小学': 1, '初中': 2, '高中': 3
 // 专业名 → 学科方向归一化（"小学教育（数学方向）"→"数学"）
 function normalizeSubject(text) {
   if (!text) return '';
+  // 特殊教育优先：教育康复学、康复治疗学等虽带"教育/治疗"字样但属特教方向
+  if (/特殊教育|教育康复|康复治疗|社区康复|儿童康复|康复医学|言语听觉|听力学|培智|盲文|自闭症|智障|残障/.test(text)) return '特殊教育';
   if (/数学/.test(text)) return '数学';
-  if (/语文|中文|汉语言/.test(text)) return '语文';
+  if (/语文|中文|汉语言|新闻传播|中国语言/.test(text)) return '语文';
   if (/英语/.test(text)) return '英语';
   if (/物理|化学|生物|科学/.test(text)) return '科学';
+  if (/历史与社会|社会科/.test(text)) return '历史与社会';
+  if (/历史/.test(text)) return '历史';
+  if (/思想政治|政治学|思政|思想品德/.test(text)) return '道德与法治';
+  if (/地理/.test(text)) return '地理';
   if (/体育/.test(text)) return '体育';
   if (/音乐/.test(text)) return '音乐';
   if (/美术|艺术|绘画|设计/.test(text)) return '美术';
   if (/信息|计算机|软件/.test(text)) return '信息技术';
   if (/学前/.test(text)) return '学前教育';
   if (/心理/.test(text)) return '心理健康';
+  // 教育学大类（小学教育/初等教育）无法定位学科，交给教资通道判断
+  if (/教育学|小学教育|初等教育/.test(text)) return '';
   return '';
+}
+
+// 学科可通融关系（浙江实际招聘口径）
+// 例：持"历史"或"地理"教资通常也能报初中"历史与社会"岗；特教岗常接受心理/学前背景
+const SUBJECT_EQUIV = {
+  '历史与社会': ['历史与社会', '历史', '地理', '道德与法治'],
+  '历史': ['历史', '历史与社会'],
+  '地理': ['地理', '历史与社会'],
+  '科学': ['科学', '物理', '化学', '生物'],
+  '物理': ['物理', '科学'],
+  '化学': ['化学', '科学'],
+  '生物': ['生物', '科学'],
+  '道德与法治': ['道德与法治', '思想政治', '政治'],
+  '思想政治': ['思想政治', '道德与法治'],
+  // 特教岗专业口径宽：接受心理学类、教育康复学等（2026年浙江各地公告通行做法）
+  '特殊教育': ['特殊教育', '心理健康'],
+  '心理健康': ['心理健康', '特殊教育'],
+};
+function expandSubjects(set) {
+  const out = new Set();
+  set.forEach(s => {
+    out.add(s);
+    (SUBJECT_EQUIV[s] || []).forEach(x => out.add(x));
+  });
+  return out;
 }
 
 function normalizeJob(job) {
@@ -183,9 +216,10 @@ function matchJobs(profile, jobs, options) {
   });
   const userMaxCertLevel = Math.max(0, ...Object.values(certSubjects));
 
-  // 用户可报学科集合（教资学科 ∪ 专业学科）
-  const userSubjects = new Set(Object.keys(certSubjects));
-  if (majorSubject) userSubjects.add(majorSubject);
+  // 用户可报学科集合（教资学科 ∪ 专业学科），再按浙江口径展开可通融学科
+  const userSubjectsRaw = new Set(Object.keys(certSubjects));
+  if (majorSubject) userSubjectsRaw.add(majorSubject);
+  const userSubjects = expandSubjects(userSubjectsRaw);
 
   // 用户荣誉最高等级（预设 + 自定义估算）
   const userMaxHonor = Math.max(0, ...userHonors.map(h => HONOR_RANK[h] || estimateHonorLevel(h)));
@@ -361,9 +395,10 @@ function matchJobs(profile, jobs, options) {
         let certOK = false;
         let failMsg = '';
         if (j.subjects.length) {
-          certOK = j.subjects.some(s => (certSubjects[s] || 0) >= needLv);
+          // 学科可通融：如岗位要"历史与社会"教资，持"历史"/"地理"教资也算满足
+          certOK = j.subjects.some(s => (SUBJECT_EQUIV[s] || [s]).some(a => (certSubjects[a] || 0) >= needLv));
           if (!certOK) {
-            const hasLowerCert = j.subjects.some(s => certSubjects[s] !== undefined);
+            const hasLowerCert = j.subjects.some(s => (SUBJECT_EQUIV[s] || [s]).some(a => certSubjects[a] !== undefined));
             if (hasLowerCert) {
               failMsg = `你持有${j.subjects.join('/')}学科教资，但学段不满足${stage}岗要求`;
             } else if (subjectOverlap.length) {
