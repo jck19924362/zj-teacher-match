@@ -1,4 +1,4 @@
-// match.js - 匹配引擎 V3
+// match.js - 匹配引擎 V3（浙江）
 // 更新：学科匹配（专业 + 教资双通道，考哪门课就要哪门教资）、
 //       户籍条款查不到时默认按"需浙江省户籍"处理、履历字段移除
 
@@ -88,6 +88,15 @@ function jobTargetYears(job) {
   return years.size ? Array.from(years) : null;
 }
 
+// 岗位招聘届别：默认 2026（数据源自 2026 届汇总表）；
+// 标题含「2027届」等则自动识别；也可在岗位对象上显式写 year 覆盖
+function jobYear(job) {
+  if (job.year) return job.year;
+  const ys = jobTargetYears(job);
+  if (ys && ys.length) return Math.max(...ys);
+  return 2026;
+}
+
 // 教资等级：幼儿园=1 小学=1 初中=2 高中=3
 function certStage(name) {
   if (!name) return 0;
@@ -117,6 +126,7 @@ function normalizeSubject(text) {
   if (/体育/.test(text)) return '体育';
   if (/音乐/.test(text)) return '音乐';
   if (/美术|艺术|绘画|设计/.test(text)) return '美术';
+  if (/通用技术/.test(text)) return '通用技术';
   if (/信息|计算机|软件/.test(text)) return '信息技术';
   if (/学前/.test(text)) return '学前教育';
   if (/心理/.test(text)) return '心理健康';
@@ -140,6 +150,9 @@ const SUBJECT_EQUIV = {
   // 特教岗专业口径宽：接受心理学类、教育康复学等（2026年浙江各地公告通行做法）
   '特殊教育': ['特殊教育', '心理健康'],
   '心理健康': ['心理健康', '特殊教育'],
+  // 通用技术与信息技术同属技术类，浙江招聘常合并招聘/互通
+  '通用技术': ['通用技术', '信息技术'],
+  '信息技术': ['信息技术', '通用技术'],
 };
 function expandSubjects(set) {
   const out = new Set();
@@ -172,10 +185,12 @@ function normalizeJob(job) {
     subjects: (r.subjects && r.subjects.length) ? r.subjects : [],
     needMaster: !!r.needMaster,
     schoolGate: r.schoolGate || null,
+    normalMajor: !!r.normalMajor,
     honorGate: r.honorGate || null,
     certText,
     certLevelReq: r.certLevel || 'none',
     audience: r.audience || 'fresh',
+    year: jobYear(job),
     stage: r.stage || job.stage || '小学',
   };
 }
@@ -184,7 +199,7 @@ function normalizeJob(job) {
  * 匹配主函数
  * profile: { graduateYear: '2026'|'2027'|'other'|'',
  *            region: 'zhejiang'|'other', city, district, otherProvince,
- *            degree: '本科'|'硕士', schoolType,
+ *            degree: '本科'|'硕士', schoolType, normalMajor: '师范类'|'非师范类'|'',
  *            major: 专业名（归一化出学科方向）,
  *            certs: [], honors: [] (含自定义), zongce: '5'|'10'|'20'|'30'|'50'|'',
  *            otherConditions: 选填文本 }
@@ -333,12 +348,20 @@ function matchJobs(profile, jobs, options) {
       const okSchool = /双一流/.test(st) && /双一流/.test(j.schoolGate)
         || /部属师范/.test(st)
         || (/浙师大/.test(st) && /浙师大/.test(j.schoolGate))
-        || (degreeRank >= 3 && /硕士/.test(j.schoolGate));
+        || (degreeRank >= 3 && /硕士/.test(j.schoolGate))
+        || (/境外高校/.test(st) && /境外|国外|海外|留学|国（境）外|归国/.test(j.schoolGate));
       if (okSchool) {
         score += 15;
       } else {
         reasons.push(`院校门槛：${j.schoolGate}`);
       }
+    }
+
+    // 6.3 师范类专业门槛（个别地区限师范类才能报；浙江实际：本科通道常限师范类，硕士通道一般不限）
+    if (j.normalMajor && degreeRank <= 2) {
+      if (profile.normalMajor === '师范类') score += 10;
+      else if (profile.normalMajor === '非师范类') reasons.push('要求师范类专业（本科）');
+      else risks.push('岗位要求师范类专业（本科），请确认你的专业是否属于师范类');
     }
 
     // 6.5 学科匹配：岗位招特定学科时，专业或教资须对口
