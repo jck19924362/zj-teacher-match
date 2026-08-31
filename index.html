@@ -435,17 +435,24 @@
       <div class="form-group">
         <label>专业（决定你能报哪个学科方向）</label>
         <div class="options" id="major">
-          <label><input type="radio" name="major" value="数学"> 数学</label>
-          <label><input type="radio" name="major" value="语文"> 语文</label>
-          <label><input type="radio" name="major" value="英语"> 英语</label>
-          <label><input type="radio" name="major" value="科学"> 科学</label>
-          <label><input type="radio" name="major" value="体育"> 体育</label>
-          <label><input type="radio" name="major" value="音乐"> 音乐</label>
-          <label><input type="radio" name="major" value="美术"> 美术</label>
-          <label><input type="radio" name="major" value="信息技术"> 信息技术</label>
-          <label><input type="radio" name="major" value="心理健康"> 心理健康</label>
-          <label><input type="radio" name="major" value="学前教育"> 学前教育</label>
-          <label><input type="radio" name="major" value="custom"> 其他</label>
+          <label data-stages="幼儿园"><input type="radio" name="major" value="学前教育"> 学前教育</label>
+          <label data-stages="小学,初中,高中"><input type="radio" name="major" value="语文"> 语文</label>
+          <label data-stages="小学,初中,高中"><input type="radio" name="major" value="数学"> 数学</label>
+          <label data-stages="小学,初中,高中"><input type="radio" name="major" value="英语"> 英语</label>
+          <label data-stages="小学"><input type="radio" name="major" value="科学"> 科学</label>
+          <label data-stages="初中,高中"><input type="radio" name="major" value="道德与法治"> 道德与法治</label>
+          <label data-stages="高中"><input type="radio" name="major" value="思想政治"> 思想政治</label>
+          <label data-stages="高中"><input type="radio" name="major" value="物理"> 物理</label>
+          <label data-stages="高中"><input type="radio" name="major" value="化学"> 化学</label>
+          <label data-stages="高中"><input type="radio" name="major" value="生物"> 生物</label>
+          <label data-stages="高中"><input type="radio" name="major" value="历史"> 历史</label>
+          <label data-stages="高中"><input type="radio" name="major" value="地理"> 地理</label>
+          <label data-stages="小学,初中,高中"><input type="radio" name="major" value="体育"> 体育</label>
+          <label data-stages="小学,初中,高中"><input type="radio" name="major" value="音乐"> 音乐</label>
+          <label data-stages="小学,初中,高中"><input type="radio" name="major" value="美术"> 美术</label>
+          <label data-stages="小学,初中,高中"><input type="radio" name="major" value="信息技术"> 信息技术</label>
+          <label data-stages="小学,初中,高中"><input type="radio" name="major" value="心理健康"> 心理健康</label>
+          <label data-stages="幼儿园,小学,初中,高中"><input type="radio" name="major" value="custom"> 其他</label>
         </div>
         <input type="text" id="majorCustom" placeholder="如：小学教育（数学方向）填这里，会自动识别学科" style="display:none; width:100%; padding:9px 12px; border:1px solid #D0D7DE; border-radius:8px; font-size:14px; margin-top:8px;">
         <div class="hint">很多岗位要求"专业对口"，学科匹配靠它判断——比如体育岗会自动排除数学专业的你。</div>
@@ -685,11 +692,40 @@
 
     // ========== 学段导航（教资选项跟着学段走） ==========
     let currentStage = "小学";
+    function filterMajor(stage) {
+      const labels = Array.from(document.querySelectorAll('#major > label'));
+      let firstVisible = null;
+      let currentCheckedVisible = false;
+      labels.forEach(lbl => {
+        const stages = (lbl.dataset.stages || '').split(',');
+        const show = stages.includes(stage);
+        lbl.style.display = show ? 'inline-flex' : 'none';
+        if (show) {
+          if (!firstVisible) firstVisible = lbl;
+          const input = lbl.querySelector('input');
+          if (input && input.checked) currentCheckedVisible = true;
+        }
+      });
+      let target = null;
+      if (stage === '幼儿园') {
+        target = labels.find(l => l.querySelector('input[value="学前教育"]'));
+      } else if (!currentCheckedVisible && firstVisible) {
+        target = firstVisible;
+      }
+      if (target) {
+        const input = target.querySelector('input');
+        input.checked = true;
+        updateHighlight('major');
+        document.getElementById('majorCustom').style.display =
+          (input.value === 'custom') ? 'block' : 'none';
+      }
+    }
     function switchStage(stage) {
       currentStage = stage;
       document.querySelectorAll(".stage-tab").forEach(t => {
         t.classList.toggle("active", t.dataset.stage === stage);
       });
+      filterMajor(stage);
       // 只显示当前学段的教资选项，其他学段已勾选的保留（隐藏但不清空）
       document.querySelectorAll(".cert-stage-box").forEach(box => {
         box.style.display = box.dataset.stage === stage ? "block" : "none";
