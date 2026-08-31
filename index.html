@@ -329,6 +329,11 @@
       padding: 2px 8px; border-radius: 999px; margin-left: 6px; font-weight: normal;
       vertical-align: 1px;
     }
+    .badge-year {
+      background: linear-gradient(135deg, #185FA5, #2E86D8); color: #fff; font-size: 11px;
+      padding: 2px 8px; border-radius: 999px; margin-left: 6px; font-weight: normal;
+      vertical-align: 1px;
+    }
     .badge-bianzhi {
       background: linear-gradient(135deg, #2E9E5B, #3DB86D); color: #fff; font-size: 11px;
       padding: 2px 8px; border-radius: 999px; margin-left: 6px; font-weight: normal;
@@ -429,7 +434,18 @@
           <label><input type="radio" name="schoolType" value="双一流"> 双一流</label>
           <label><input type="radio" name="schoolType" value="部属师范"> 部属师范</label>
           <label><input type="radio" name="schoolType" value="浙师大或杭师大"> 浙师大/杭师大</label>
+          <label><input type="radio" name="schoolType" value="境外高校"> 境外高校（含国外硕士）</label>
         </div>
+      </div>
+
+      <div class="form-group">
+        <label>专业是否为师范类</label>
+        <div class="options" id="normalMajor">
+          <label><input type="radio" name="normalMajor" value="师范类"> 师范类</label>
+          <label><input type="radio" name="normalMajor" value="非师范类"> 非师范类</label>
+          <label><input type="radio" name="normalMajor" value=""> 不限/不确定</label>
+        </div>
+        <div class="hint">个别地区（多见于提前批）要求必须是师范类专业才能报考；师范生选「师范类」匹配更准，非师范生会被直接判部分岗位不符。</div>
       </div>
 
       <div class="form-group">
@@ -439,7 +455,7 @@
           <label data-stages="小学,初中,高中"><input type="radio" name="major" value="语文"> 语文</label>
           <label data-stages="小学,初中,高中"><input type="radio" name="major" value="数学"> 数学</label>
           <label data-stages="小学,初中,高中"><input type="radio" name="major" value="英语"> 英语</label>
-          <label data-stages="小学"><input type="radio" name="major" value="科学"> 科学</label>
+          <label data-stages="小学,初中"><input type="radio" name="major" value="科学"> 科学</label>
           <label data-stages="小学"><input type="radio" name="major" value="特殊教育"> 特殊教育</label>
           <label data-stages="初中,高中"><input type="radio" name="major" value="道德与法治"> 道德与法治</label>
           <label data-stages="初中"><input type="radio" name="major" value="历史与社会"> 历史与社会</label>
@@ -449,6 +465,7 @@
           <label data-stages="高中"><input type="radio" name="major" value="生物"> 生物</label>
           <label data-stages="高中"><input type="radio" name="major" value="历史"> 历史</label>
           <label data-stages="高中"><input type="radio" name="major" value="地理"> 地理</label>
+          <label data-stages="高中"><input type="radio" name="major" value="通用技术"> 通用技术</label>
           <label data-stages="小学,初中,高中"><input type="radio" name="major" value="体育"> 体育</label>
           <label data-stages="小学,初中,高中"><input type="radio" name="major" value="音乐"> 音乐</label>
           <label data-stages="小学,初中,高中"><input type="radio" name="major" value="美术"> 美术</label>
@@ -513,6 +530,7 @@
             <label><input type="checkbox" value="初中物理"> 物理</label>
             <label><input type="checkbox" value="初中化学"> 化学</label>
             <label><input type="checkbox" value="初中生物"> 生物</label>
+            <label><input type="checkbox" value="初中科学"> 科学</label>
             <label><input type="checkbox" value="初中道德与法治"> 道德与法治</label>
             <label><input type="checkbox" value="初中历史与社会"> 历史与社会</label>
             <label><input type="checkbox" value="初中历史"> 历史</label>
@@ -542,6 +560,7 @@
             <label><input type="checkbox" value="高中体育"> 体育</label>
             <label><input type="checkbox" value="高中美术"> 美术</label>
             <label><input type="checkbox" value="高中信息技术"> 信息技术</label>
+            <label><input type="checkbox" value="高中通用技术"> 通用技术</label>
             <label><input type="checkbox" value="高中心理健康"> 心理健康</label>
           </div>
         </div>
@@ -781,7 +800,7 @@
         else label.classList.remove("active");
       });
     }
-    ["graduateYear","degree","schoolType","major","region","certsKg","certsPrimary","certsJunior","certsSenior","honors","honorsScholarship","honorsContest"].forEach(id => {
+    ["graduateYear","degree","schoolType","normalMajor","major","region","certsKg","certsPrimary","certsJunior","certsSenior","honors","honorsScholarship","honorsContest"].forEach(id => {
       const g = document.getElementById(id);
       if (g) g.addEventListener("change", () => { updateHighlight(id); runMatch(); });
     });
@@ -821,6 +840,7 @@
         graduateYear: document.querySelector('input[name="graduateYear"]:checked')?.value || "",
         degree: document.querySelector('input[name="degree"]:checked')?.value || "",
         schoolType: document.querySelector('input[name="schoolType"]:checked')?.value || "",
+        normalMajor: document.querySelector('input[name="normalMajor"]:checked')?.value || "",
         region,
         city: region === "zhejiang" ? citySel.value : "",
         district: region === "zhejiang" ? districtSel.value : "",
@@ -924,6 +944,7 @@
       function card(job) {
         const cls = job.status === "可报" ? "ok" : job.status === "待确认" ? "maybe" : "no";
         const badge = job.early ? '<span class="badge-early">提前批</span>' : "";
+        const yearBadge = job.year ? `<span class="badge-year">${job.year}届</span>` : "";
         const bianzhiBadge = /事业编|备案|员额|在编|全额/.test((job.staffing || "") + (job.batch || "")) ? '<span class="badge-bianzhi">编制</span>' : "";
         const statusText = job.status === "可报" ? "✅ 可报" : job.status === "待确认" ? "⚠️ 待确认" : "❌ 不符";
         const tips = job.risks.length ? `<div class="job-tip">⚠️ ${job.risks.join("；")}</div>` : "";
@@ -933,7 +954,7 @@
         return `
           <div class="job-card ${cls}" onclick="openDetail(${job.id})">
             <div class="job-title">
-              ${job.city} ${job.district || ""} · ${job.batch} ${badge}${bianzhiBadge}
+              ${job.city} ${job.district || ""} · ${job.batch} ${yearBadge}${badge}${bianzhiBadge}
               <span class="job-status">${statusText}</span>
             </div>
             <div class="job-info">${getDisplayCount(job)}</div>
@@ -1041,7 +1062,7 @@
             }
           }
           if (p.otherConditions) document.getElementById("otherConditions").value = p.otherConditions;
-          ["graduateYear","degree","schoolType","major","region","certsKg","certsPrimary","certsJunior","certsSenior","honors","honorsScholarship","honorsContest"].forEach(updateHighlight);
+          ["graduateYear","degree","schoolType","normalMajor","major","region","certsKg","certsPrimary","certsJunior","certsSenior","honors","honorsScholarship","honorsContest"].forEach(updateHighlight);
         } catch (e) { console.log("读取档案失败", e); }
       }
       // 按默认学段（小学）初始化教资显示区，再跑一次匹配
