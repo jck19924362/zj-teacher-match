@@ -29,7 +29,7 @@ const JOBS = [
     staffing: "事业编", enroll: "2026年1月12日-1月16日", exam: "笔试详见公告",
     condition: "硕士须获国奖/省奖/省师范生技能赛三等奖或校级综合荣誉（余杭户籍可放宽至院级）；本科师范须省级及以上荣誉",
     url: "https://sydw.huatu.com/2026/0108/2845793.html",
-    rules: { stage: "小学、中学", hukou: "none", needMaster: false, schoolGate: null, honorGate: "本科须省级及以上荣誉", certLevel: "any", audience: "fresh" } },
+    rules: { stage: "小学、中学", hukou: "none", needMaster: false, schoolGate: null, honorGate: "本科须省级及以上荣誉", certLevel: "any", normalMajor: true, audience: "fresh" } },
 
   { id: 3, city: "杭州市", district: "富阳区", batch: "校园招聘", early: true, stage: "小学、中学",
     title: "富阳区面向2026届毕业生校园招聘公告",
@@ -57,7 +57,7 @@ const JOBS = [
     staffing: "事业编", enroll: "2025年12月1日-12月9日", exam: "两轮面试（结构化+试讲答辩）",
     condition: "户籍不限；2026届硕士，或一段线/提前批录取的本科师范生且获省优毕、校综二等奖学金、省师范生技能赛三等奖或专业排名前20%；30周岁以下",
     url: "https://www.sxyc.gov.cn/col/col1229445083/art/2025/art_83c23e5d7c0e452487e326eaf6bf763b.html",
-    rules: { subjects: ["语文", "数学", "英语", "科学", "美术", "信息技术"], stage: "小学", hukou: "none", needMaster: false, schoolGate: null, honorGate: "校级综合奖学金（本科通道）", certLevel: "none", audience: "fresh" } },
+    rules: { subjects: ["语文", "数学", "英语", "科学", "美术", "信息技术"], stage: "小学", hukou: "none", needMaster: false, schoolGate: null, honorGate: "校级综合奖学金（本科通道）", certLevel: "none", normalMajor: true, audience: "fresh" } },
 
   { id: 6, city: "绍兴市", district: "柯桥区", batch: "社招统考", early: false, stage: "小学",
     title: "柯桥区教体系统新教师公开招聘（三）",
@@ -66,7 +66,7 @@ const JOBS = [
     staffing: "事业编", enroll: "2026年4月20日-4月28日", exam: "笔试5月16日",
     condition: "硕士或2026届师范本科或持证本科；小学全科限柯桥户籍/柯桥入伍退役军人",
     url: "https://fenbi.com/page/exam-information-detail/465762739046400",
-    rules: { stage: "小学", hukou: "none", needMaster: false, schoolGate: null, honorGate: null, certLevel: "any", audience: "fresh" } },
+    rules: { stage: "小学", hukou: "none", needMaster: false, schoolGate: null, honorGate: null, certLevel: "any", normalMajor: true, audience: "fresh" } },
 
   { id: 7, city: "绍兴市", district: "柯桥区", batch: "储备教师", early: false, stage: "小学、中学",
     title: "柯桥区中小学储备教师招聘公告",
@@ -251,7 +251,7 @@ const JOBS = [
     staffing: "事业编", enroll: "网报至2025年11月11日", exam: "笔试11月15日；面试11月23日",
     condition: "2026届硕士（本科须师范）或师范类本科；38周岁以下；户籍不限；须有普通话证",
     url: "https://www.nanhu.gov.cn/art/2025/11/4/art_1229282434_5671414.html",
-    rules: { stage: "小学、中学", hukou: "none", needMaster: false, schoolGate: null, honorGate: null, certLevel: "none", audience: "fresh" } },
+    rules: { stage: "小学、中学", hukou: "none", needMaster: false, schoolGate: null, honorGate: null, certLevel: "none", normalMajor: true, audience: "fresh" } },
 
   { id: 27, city: "嘉兴市", district: "南湖区", batch: "校园招聘", early: true, stage: "小学",
     title: "南湖实验学校公开招聘公告",
@@ -269,7 +269,7 @@ const JOBS = [
     staffing: "事业编", enroll: "未查到", exam: "未查到",
     condition: "2026届硕士或师范类本科；38周岁以下（研究生43以下）；户籍不限",
     url: "https://www.xiuzhou.gov.cn/col/col1229406930/art/2025/art_8bfc0289242e41de88fe8ffce3b4625a.html",
-    rules: { stage: "小学、中学", hukou: "none", needMaster: false, schoolGate: null, honorGate: null, certLevel: "unknown", audience: "fresh" } },
+    rules: { stage: "小学、中学", hukou: "none", needMaster: false, schoolGate: null, honorGate: null, certLevel: "unknown", normalMajor: true, audience: "fresh" } },
 
   { id: 29, city: "嘉兴市", district: "秀洲区", batch: "社招", early: false, stage: "小学、中学、幼儿园",
     title: "秀洲区公开招聘中小学和幼儿园教师公告",
@@ -287,7 +287,7 @@ const JOBS = [
     staffing: "事业编", enroll: "未查到", exam: "未查到",
     condition: "2026届师范本科或硕士；38岁以下（研究生43）；户籍不限",
     url: "https://job.sdgxbys.cn/campus/view/id/742811",
-    rules: { stage: "小学、中学", hukou: "none", needMaster: false, schoolGate: null, honorGate: null, certLevel: "unknown", audience: "fresh" } },
+    rules: { stage: "小学、中学", hukou: "none", needMaster: false, schoolGate: null, honorGate: null, certLevel: "unknown", normalMajor: true, audience: "fresh" } },
 
   { id: 31, city: "嘉兴市", district: "经开区", batch: "社招", early: false, stage: "小学、中学",
     title: "经开区2026年公开招聘公办中小学教师公告",
@@ -524,7 +524,7 @@ const JOBS = [
     staffing: "事业编", enroll: "2026年6月25日-7月1日", exam: "笔试初定7月11日",
     condition: "户籍不限；38周岁以下；应届本科须师范类专业，社会人员须本科及以上；须初中及以上教资（小学岗可报）；服务满5年",
     url: "https://www.kecheng.gov.cn/col/col1229769719/art/2026/art_4a312a9619a04289b8e4504cc6816d92.html",
-    rules: { subjects: ["语文", "数学", "科学", "英语"], stage: "小学、中学", hukou: "none", needMaster: false, schoolGate: null, honorGate: null, certLevel: "junior", audience: "fresh" } },
+    rules: { subjects: ["语文", "数学", "科学", "英语"], stage: "小学、中学", hukou: "none", needMaster: false, schoolGate: null, honorGate: null, certLevel: "junior", normalMajor: true, audience: "fresh" } },
 
   { id: 57, city: "衢州市", district: "衢江区", batch: "社招", early: false, stage: "中学",
     title: "衢江区教育系统公开招聘教师公告",
@@ -670,7 +670,7 @@ const JOBS = [
     staffing: "事业编", enroll: "网上预报名至2026年3月18日12:00", exam: "详见公告",
     condition: "2026届硕士及以上（基层服务期满未入编者视同应届）；户籍不限；研究生教育学类或本科师范类专业；38周岁以下（博士43）；教资2026年8月31日前取得或凭考试合格证明",
     url: "https://www.qjq.gov.cn/col/col1389659/art/2026/art_91a4137f877049f28b16a314d12943d3.html",
-    rules: { subjects: ["英语", "历史", "数学", "心理健康"], stage: "中学", hukou: "none", needMaster: true, schoolGate: null, honorGate: null, certLevel: "none", audience: "fresh" } },
+    rules: { subjects: ["英语", "历史", "数学", "心理健康"], stage: "中学", hukou: "none", needMaster: true, schoolGate: null, honorGate: null, certLevel: "none", normalMajor: true, audience: "fresh" } },
 
   { id: 73, city: "衢州市", district: "柯城区", batch: "校园招聘（浙师大专场）", early: true, stage: "中学",
     title: "柯城区教育局招聘2026年优秀应届毕业生公告（初中各学科）",
@@ -843,4 +843,22 @@ const JOBS = [
     condition: "高校教师岗，一般要求硕士及以上；康复辅具、思政、体育等专业；不适合本科应届生报考，仅作数据留存",
     url: "https://www.zcmu.edu.cn/",
     rules: { subjects: [], stage: "高校", hukou: "none", needMaster: true, schoolGate: null, honorGate: null, certLevel: "unknown", audience: "fresh" } },
+
+  { id: 92, city: "杭州市", district: "市直属（杭高）", batch: "提前批/校招", early: true, stage: "高中", year: 2027,
+    title: "杭州高级中学教育集团2027届赴高校自主招聘教师公告",
+    posts: "高中全学科教师20人 + 竞赛教练（数学/物理/化学/生物/信息学）",
+    count: "全学科20人+竞赛教练若干",
+    staffing: "事业编（学校自主招聘）", enroll: "即日起至 2026-09-15（以学校通知为准）", exam: "面试/试讲（学校自主，详见公告）",
+    condition: "本科可报、专业不限；应届可后补教资；有竞赛奖项/奖学金/教学经历者优先（非硬性）；高中岗位与小学教育背景错位，竞争强",
+    url: "https://www.ncss.cn/student/jobs/UqNDnVLsp3Yg7D3uUZbQDa/detail.html",
+    rules: { subjects: [], stage: "高中", hukou: "none", needMaster: false, schoolGate: null, honorGate: null, certLevel: "none", audience: "fresh" } },
+
+  { id: 93, city: "宁波市", district: "鄞州区", batch: "提前批/校招（浙师大专场）", early: true, stage: "初中", year: 2027,
+    title: "宁波市鄞州区2027届提前批公开招聘事业编制教师公告",
+    posts: "初中语文×7 / 初中数学×8 / 初中科学×8 / 初中英语×8 / 初中社政×8",
+    count: "初中39人",
+    staffing: "事业编", enroll: "初定 2026-09（系统报名，以公告为准）", exam: "赴金华（浙师大）考核",
+    condition: "面向2026/2027届师范类应届；浙江省户籍/生源；本科须国/省政府奖学金、省优毕或省属重点师范前5%；须初中及以上教资（2027届可聘用后1年内取得）；本科通道门槛较高",
+    url: "https://www.nbyz.gov.cn/col/col1229117192/art/2026/art_8f2e87adf2fa4eb1a544f6693151914f.html",
+    rules: { subjects: ["语文", "数学", "科学", "英语", "道德与法治"], stage: "初中", hukou: "zhejiang", needMaster: false, schoolGate: null, honorGate: "本科须国/省政府奖学金、省优毕或省属重点师范前5%", certLevel: "junior", normalMajor: true, audience: "fresh" } },
 ];
