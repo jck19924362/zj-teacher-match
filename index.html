@@ -440,7 +440,9 @@
           <label data-stages="小学,初中,高中"><input type="radio" name="major" value="数学"> 数学</label>
           <label data-stages="小学,初中,高中"><input type="radio" name="major" value="英语"> 英语</label>
           <label data-stages="小学"><input type="radio" name="major" value="科学"> 科学</label>
+          <label data-stages="小学"><input type="radio" name="major" value="特殊教育"> 特殊教育</label>
           <label data-stages="初中,高中"><input type="radio" name="major" value="道德与法治"> 道德与法治</label>
+          <label data-stages="初中"><input type="radio" name="major" value="历史与社会"> 历史与社会</label>
           <label data-stages="高中"><input type="radio" name="major" value="思想政治"> 思想政治</label>
           <label data-stages="高中"><input type="radio" name="major" value="物理"> 物理</label>
           <label data-stages="高中"><input type="radio" name="major" value="化学"> 化学</label>
@@ -455,7 +457,7 @@
           <label data-stages="幼儿园,小学,初中,高中"><input type="radio" name="major" value="custom"> 其他</label>
         </div>
         <input type="text" id="majorCustom" placeholder="如：小学教育（数学方向）填这里，会自动识别学科" style="display:none; width:100%; padding:9px 12px; border:1px solid #D0D7DE; border-radius:8px; font-size:14px; margin-top:8px;">
-        <div class="hint">很多岗位要求"专业对口"，学科匹配靠它判断——比如体育岗会自动排除数学专业的你。</div>
+        <div class="hint">很多岗位要求"专业对口"，学科匹配靠它判断——比如体育岗会自动排除数学专业的你。<br>特殊教育没有独立学段，统一放在「小学」里；特教岗专业口径较宽，心理学类也可报。</div>
       </div>
 
       <div class="form-group">
@@ -498,6 +500,7 @@
             <label><input type="checkbox" value="小学信息技术"> 信息技术</label>
             <label><input type="checkbox" value="小学心理健康"> 心理健康</label>
             <label><input type="checkbox" value="小学全科"> 全科</label>
+            <label><input type="checkbox" value="小学特殊教育"> 特殊教育</label>
           </div>
         </div>
 
@@ -511,6 +514,7 @@
             <label><input type="checkbox" value="初中化学"> 化学</label>
             <label><input type="checkbox" value="初中生物"> 生物</label>
             <label><input type="checkbox" value="初中道德与法治"> 道德与法治</label>
+            <label><input type="checkbox" value="初中历史与社会"> 历史与社会</label>
             <label><input type="checkbox" value="初中历史"> 历史</label>
             <label><input type="checkbox" value="初中地理"> 地理</label>
             <label><input type="checkbox" value="初中音乐"> 音乐</label>
