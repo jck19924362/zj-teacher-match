@@ -5,6 +5,26 @@
 // ========== 学历等级 ==========
 const DEGREE_RANK = { '大专': 1, '本科': 2, '硕士': 3, '博士': 4 };
 
+// ========== 浙江省内 市→区县 映射（与 index.html cityDistricts 同步）==========
+const CITY_DISTRICTS = {
+  "杭州": ["上城区","拱墅区","西湖区","滨江区","萧山区","余杭区","临平区","钱塘区","富阳区","临安区","桐庐县","淳安县","建德市"],
+  "宁波": ["海曙区","江北区","北仑区","镇海区","鄞州区","奉化区","象山县","宁海县","余姚市","慈溪市"],
+  "温州": ["鹿城区","龙湾区","瓯海区","洞头区","永嘉县","平阳县","苍南县","文成县","泰顺县","瑞安市","乐清市","龙港市"],
+  "嘉兴": ["南湖区","秀洲区","嘉善县","海盐县","海宁市","平湖市","桐乡市"],
+  "湖州": ["吴兴区","南浔区","德清县","长兴县","安吉县"],
+  "绍兴": ["越城区","柯桥区","上虞区","新昌县","诸暨市","嵊州市"],
+  "金华": ["婺城区","金东区","武义县","浦江县","磐安县","兰溪市","义乌市","东阳市","永康市"],
+  "衢州": ["柯城区","衢江区","常山县","开化县","龙游县","江山市"],
+  "舟山": ["定海区","普陀区","岱山县","嵊泗县"],
+  "台州": ["椒江区","黄岩区","路桥区","玉环市","三门县","天台县","仙居县","温岭市","临海市"],
+  "丽水": ["莲都区","青田县","缙云县","遂昌县","松阳县","云和县","庆元县","景宁畲族自治县","龙泉市"]
+};
+// 反向：区县 → 所属市
+const DISTRICT_TO_CITY = {};
+for (const [city, districts] of Object.entries(CITY_DISTRICTS)) {
+  for (const d of districts) DISTRICT_TO_CITY[d] = city;
+}
+
 // ========== 荣誉等级（1~6，数字越大含金量越高） ==========
 const HONOR_RANK = {
   // 荣誉称号
@@ -17,6 +37,7 @@ const HONOR_RANK = {
   // 奖学金（按等级）
   '国家奖学金': 6,
   '国家励志奖学金': 4,
+  '省政府奖学金': 5,
   '校级一等奖学金': 4,
   '校级二等奖学金': 3,
   '校级三等奖学金': 2.5,
@@ -25,6 +46,13 @@ const HONOR_RANK = {
   '省级师范生技能竞赛一等奖': 5,
   '省级师范生技能竞赛二等奖': 4.5,
   '省级师范生技能竞赛三等奖': 4,
+  // 学科/教学竞赛
+  '全国师范生教学技能竞赛获奖': 5,
+  '省级学科竞赛一等奖': 4.5,
+  '省级学科竞赛二等奖': 4,
+  '省级学科竞赛三等奖': 3.5,
+  '高中学科奥赛省级获奖': 4.5,
+  '全国大学生竞赛获奖': 4.5,
 };
 
 // 自定义荣誉按关键词评估等级
@@ -48,6 +76,406 @@ function estimateHonorLevel(name) {
   if (/奖学金/.test(name)) return 3;
   if (/院级|系级/.test(name)) return 2;
   return 2; // 未识别的自定义荣誉默认较低等级，建议人工核实
+}
+
+// ========== 资格条款解析引擎（V3.1） ==========
+// 提前批的报考资格常为"满足以下条件之一"的多条款 OR 结构（如：
+//   "硕士研究生 或 公费师范生 或 双一流本科 或 师范本科+校一等奖学金 或 综测前20%…"）
+// 旧版只用一个"荣誉等级阈值"一刀切 → 大量误判为待确认。
+// 新版：把门槛文本拆成条款，每条用特征词归类并逐条判定，命中任一即通过。
+// profile 新增字段：specialStatus[]（公费师范生/复硕/国优计划/初阳经亨颐/一表特控线）、
+//                   politicalStatus（中共党员/预备党员/共青团员）、honors 含学科竞赛/奥赛等。
+
+// 用户档案 → 结构化能力集（供资格判定）
+function buildAbilitySet(profile) {
+  const degree = profile.degree || '';
+  const st = profile.schoolType || '';
+  const honors = profile.honors || [];
+  const special = profile.specialStatus || [];
+  const political = profile.politicalStatus || '';
+  const zongce = parseFloat(profile.zongce) || null;
+  const normal = profile.normalMajor || '';
+  const putonghua = profile.putonghua || '';
+  const schTimes = parseInt(profile.scholarshipTimes, 10) || 1;   // 奖学金次数（默认1）
+  const H = s => honors.some(h => h && h.indexOf(s) !== -1);   // 荣誉含关键词
+  const S = s => special.indexOf(s) !== -1;                     // 特殊身份
+  const hasScholarship = H('国家奖学金') || H('国家励志奖学金') || H('省政府奖学金') || H('校级一等奖学金') || H('校级二等奖学金') || H('校级三等奖学金');
+  // 院校层次（数值越大层次越高）：985=6, 部属师范=5.5, 211=5, 双一流(非985/211)=4.5,
+  //   10所重点师范=4, 省属重点师范=3, 浙师大杭师大=2.5, 双非一本=2, 普通本科=1, 境外=-1单独标记
+  function schoolLevel(s) {
+    if (!s) return 0;
+    if (s.indexOf('985') !== -1) return 6;
+    if (s.indexOf('部属师范') !== -1) return 5.5;
+    if (s.indexOf('211') !== -1) return 5;
+    if (s.indexOf('双一流') !== -1) return 4.5;
+    if (s.indexOf('10所重点师范') !== -1) return 4;
+    if (s.indexOf('省属重点师范') !== -1) return 3;
+    if (s.indexOf('浙师大') !== -1 || s.indexOf('杭师大') !== -1) return 2.5;
+    if (s.indexOf('双非一本') !== -1) return 2;
+    if (s.indexOf('普通本科') !== -1) return 1;
+    if (s.indexOf('境外') !== -1) return -1;   // 境外单列
+    return 1;
+  }
+  const sLevel = schoolLevel(st);
+  // 本科院校层次（仅硕士用户有独立的本科；本科用户的本科=主院校）
+  const bSt = profile.bachelorSchoolType || st;
+  const bLevel = schoolLevel(bSt);
+  const ab = {
+    inZhejiang: profile.region !== 'other',
+    city: profile.city || '',
+    district: profile.district || '',
+    degreeRank: DEGREE_RANK[degree] || 0,
+    isMaster: DEGREE_RANK[degree] >= 3,
+    isBachelor: DEGREE_RANK[degree] === 2,
+    // 院校层次——主院校（本科用户=本科，硕士用户=硕士）
+    school: st,
+    schoolLevel: sLevel,
+    is985: sLevel >= 6,
+    is211: sLevel >= 5,
+    isShuangyiliu: sLevel >= 4.5,
+    isBushuShifan: st.indexOf('部属师范') !== -1,
+    isZheShiDa: st.indexOf('浙师大') !== -1 || st.indexOf('杭师大') !== -1,
+    isShengzhongdian: st.indexOf('省属重点师范') !== -1,
+    is10Shifan: st.indexOf('10所重点师范') !== -1 || st.indexOf('部属师范') !== -1,
+    isJingwai: st.indexOf('境外') !== -1,
+    // 本科院校层次（仅硕士用户独立；本科用户与主院校一致）
+    bachelorSchool: bSt,
+    bachelorSchoolLevel: bLevel,
+    bIs985: bLevel >= 6,
+    bIs211: bLevel >= 5,
+    bIsShuangyiliu: bLevel >= 4.5,
+    bIsBushuShifan: bSt.indexOf('部属师范') !== -1,
+    bIsZheShiDa: bSt.indexOf('浙师大') !== -1 || bSt.indexOf('杭师大') !== -1,
+    bIsShengzhongdian: bSt.indexOf('省属重点师范') !== -1,
+    bIsJingwai: bSt.indexOf('境外') !== -1,
+    isNormal: normal === '师范类',
+    // 特殊身份
+    isGongfei: S('公费师范生'),
+    isFushuo: S('复硕'),
+    isGuoyou: S('国优计划'),
+    isElite: S('初阳经亨颐') || S('初阳') || S('经亨颐'),
+    isYiduan: S('一表或特控线') || S('一段') || S('特控线'),
+    // 政治面貌
+    political,
+    isParty: political === '中共党员' || political === '预备党员',
+    // 普通话：二甲及以上(2)>二乙(1)>其他/未考取(0)；兼容旧值(一甲/一乙/二甲均视为二甲及以上)
+    putonghua,
+    putonghuaRank: (putonghua === '二甲及以上' || putonghua === '一甲' || putonghua === '一乙' || putonghua === '二甲') ? 2 : putonghua === '二乙' ? 1 : 0,
+    // 荣誉
+    hasGuojiang: H('国家奖学金') && !H('励志'),   // 国家奖学金（不含励志）
+    hasGuoliZhi: H('国家励志奖学金'),
+    hasShengzhengFu: H('省政府奖学金'),
+    hasSchoolFirst: H('校级一等奖学金'),
+    hasSchoolSecond: H('校级二等奖学金'),
+    hasSchoolThird: H('校级三等奖学金'),
+    hasShengYouni: H('省级优秀毕业生'),
+    hasXiaoYouni: H('校级优秀毕业生'),
+    hasShengSkill1: H('省级师范生技能竞赛一等奖'),
+    hasShengSkill2: H('省级师范生技能竞赛二等奖'),
+    hasShengSkill3: H('省级师范生技能竞赛三等奖'),
+    hasGuoSkill: H('全国师范生教学技能竞赛获奖') || H('全国师范生技能竞赛'),
+    hasXueke1: H('省级学科竞赛一等奖') || H('省学科竞赛一等奖'),
+    hasXueke2: H('省级学科竞赛二等奖') || H('省学科竞赛二等奖'),
+    hasXueke3: H('省级学科竞赛三等奖') || H('省学科竞赛三等奖'),
+    hasAoKe: H('高中学科奥赛省级获奖') || H('奥赛'),
+    hasGuoDaSai: H('全国大学生竞赛获奖'),
+    // 奖学金次数相关（"两次校级二等及以上"类条款）
+    scholarshipTimes: schTimes,
+    hasScholarship,
+    hasSecondLevelAndAbove: H('国家奖学金') || H('省政府奖学金') || H('校级一等奖学金') || H('校级二等奖学金'),
+    hasTwiceScholarship: schTimes >= 2 && hasScholarship,
+    hasTwiceSecondAbove: schTimes >= 2 && (H('国家奖学金') || H('省政府奖学金') || H('校级一等奖学金') || H('校级二等奖学金')),
+    zongce,
+    // 荣誉最高等级（沿用旧逻辑，作为兜底）
+    maxHonor: Math.max(0, honors.map(h => HONOR_RANK[h] || estimateHonorLevel(h))),
+  };
+  return ab;
+}
+
+// 把门槛文本按 OR 拆成条款
+// 分隔符：或、；、;、/、、等之一标记；"博士/硕士/双一流本科"中的 / 也是 OR
+// 注意保护括号内容：如"研究生(师范或教育类)"、"2022高考特控线(一段)"里的"或"不拆
+function splitClauses(text) {
+  if (!text) return [];
+  const cleaned = text
+    .replace(/报考资格须满足之一|须符合下列资格之一|满足以下条件之一|符合下列条件之一|满足其一|之一|等之一|以下资格|资格之一|条件之一/g, ' ')
+    .replace(/[（(]\s*[）)]/g, '')
+    .trim();
+  // 先把括号内容替换成占位符保护起来
+  const brackets = [];
+  const masked = cleaned.replace(/[（(][^（()）]*[）)]/g, m => { brackets.push(m); return `\u0001${brackets.length - 1}\u0002`; });
+  const parts = masked
+    .split(/或|；|;|\/|\n|、/)
+    .map(s => s.replace(/^[（(]|[）)]$/g, '').trim())
+    .filter(s => s.length >= 2 && !/^[和及与]$/.test(s));
+  // 还原括号内容
+  return parts.map(p => p.replace(/\u0001(\d+)\u0002/g, (_, i) => brackets[parseInt(i, 10)]));
+}
+
+// 判定条款内部是否 AND 组合（"师范本科+校级奖学金"、"硕士且本科为师范"、"金华户籍且国内部分高校"）
+// 规则：含"且/并/及/同时" → 强制 AND（每段都命中）；含"+" → 有荣誉/排名词时 AND，否则 OR（院校并列）
+function clauseHit(clause, ab) {
+  if (!clause) return false;
+  const c = clause.trim();
+  if (!c) return false;
+
+  // 奖学金次数条款优先判定（"两次校级二等及以上奖学金"里的"及"是固定搭配，不是 AND 组合）
+  if (/奖学/.test(c) && (/(两次|二次|2次|两[次个]|三次|3次|三[次个])/.test(c))) {
+    const n3 = /(三次|3次|三[次个])(?:及以上|以上)?/.test(c);
+    if (n3) return ab.scholarshipTimes >= 3 && ab.hasScholarship;
+    if (/一等|以上|国家|省/.test(c) && !/三等/.test(c)) return ab.hasTwiceSecondAbove;
+    return ab.hasTwiceScholarship;
+  }
+
+  // 拆 AND 组合（+ 且 并 及 同时）——但注意"浙师大杭师大"这类并列院校不拆
+  if (/[+＋且并及]/.test(c) && !/师范生|技能竞赛|学科竞赛/.test(c.replace(/[+＋且并及]/g, ''))) {
+    const parts = c.split(/[+＋且并及]/).map(s => s.trim()).filter(s => s.length >= 2);
+    if (parts.length >= 2) {
+      const hasStrictAnd = /且|并|及|同时/.test(c);   // 明确"且/并/及" → AND
+      const honorLike = p => /奖|荣誉|优|技能|竞赛|前\s*\d|排名|综合测评|成绩/.test(p);
+      const hasHonor = parts.some(honorLike);
+      if (hasStrictAnd) {
+        // 强制 AND：每段都须命中（院校/户籍/荣誉都算）
+        return parts.every(p => singleClauseHit(p, ab) === true);
+      } else if (hasHonor) {
+        // "+"且含荣誉 → AND
+        return parts.every(p => singleClauseHit(p, ab) === true);
+      } else {
+        // "+"且全院校/户籍类 → OR（"部属师范+省重点师范+杭师"并列）
+        return parts.some(p => singleClauseHit(p, ab) === true);
+      }
+    }
+  }
+  return singleClauseHit(c, ab);
+}
+
+// 单条款判定（不处理 AND 组合）
+function singleClauseHit(c, ab) {
+  // 去掉条款内对"仅/限/须"的修饰不影响命中（命中即满足该项）
+  const any = (pats) => pats.some(p => c.indexOf(p) !== -1);
+  // 院校限定词：条款含这些词时，"本科/硕士"应理解为"某类院校的本科/硕士"，走院校判定而非纯学历
+  const hasSchoolWord = any(['双一流', '一流大学', '一流学科', '985', '211', '部属师范', '部属师范大学', '教育部直属', '浙师大', '杭师大', '浙江师范大学', '杭州师范大学', '温大', '温州大学', '宁大', '宁波大学', '师范', '省属重点', '省重点', '重点建设', '重点师范', '10所', '十所', '名校', 'C9', '九校', '清华', '北大', '境外', '国外', '海外', '留学', '世界前', '世界排名前', '部分高校']);
+
+  // —— 学历条款（纯学历、无院校限定词时才按学历判）——
+  if (any(['博士']) && !hasSchoolWord && !any(['本科以下'])) return ab.degreeRank >= 4;
+  if (any(['硕士', '研究生']) && !hasSchoolWord && !any(['本科'])) return ab.isMaster;
+  if (any(['本科']) && !hasSchoolWord) return ab.isBachelor || ab.isMaster;
+
+  // —— 院校层次条款（注意顺序：先具体后宽泛；含"本科"时优先用本科院校层次）——
+  // 判断本条款是否明确指"本科"院校（人才引进常见"本科须为双一流/985/211"）
+  const saysBach = any(['本科院校', '本科为', '本科须', '本科学历', '本科毕业于', '本科阶段', '本科学历须', '本科须为']);
+  const useBach = saysBach;
+  // 取本科/硕士院校层次对应的能力
+  const L985 = useBach ? ab.bIs985 : ab.is985;
+  const L211 = useBach ? ab.bIs211 : ab.is211;
+  const LSYL = useBach ? ab.bIsShuangyiliu : ab.isShuangyiliu;
+  const LBushu = useBach ? ab.bIsBushuShifan : ab.isBushuShifan;
+  const LZheShi = useBach ? ab.bIsZheShiDa : ab.isZheShiDa;
+  const LJingwai = useBach ? ab.bIsJingwai : ab.isJingwai;
+
+  if (any(['清华', '北大', 'C9', '九校联盟'])) return L985 && ab.isBachelor;
+  // 精确档位：985 / 211 / 双一流 分开（985 已算 211 和双一流，211 已算双一流）
+  if (any(['985'])) return L985;
+  if (any(['211'])) return L211;
+  if (any(['双一流', '一流大学', '一流学科'])) return LSYL;
+  if (any(['部属师范', '部属师范大学', '教育部直属'])) return LBushu;
+  if (any(['浙师大', '杭师大', '浙江师范大学', '杭州师范大学', '温大', '温州大学', '宁大', '宁波大学'])) return LZheShi;
+  if (any(['省属重点师范', '省重点师范', '省属重点建设高校', '重点建设高校'])) return (useBach ? ab.bIsShengzhongdian || ab.bIsZheShiDa : ab.isShengzhongdian || ab.isZheShiDa);
+  if (any(['10所师范', '十所师范', '重点师范大学'])) return useBach ? (ab.bachelorSchoolLevel >= 4) : ab.is10Shifan;
+  if (any(['境外', '国外', '海外', '留学', '国（境）外', '国境外', '世界前', '世界排名前'])) return LJingwai || ab.isMaster;
+
+  // —— 特殊身份条款 ——
+  if (any(['公费师范'])) return ab.isGongfei;
+  if (any(['复硕'])) return ab.isFushuo;
+  if (any(['国优计划'])) return ab.isGuoyou;
+  if (any(['初阳', '经亨颐', '精英班', '祖楠班', '子渊'])) return ab.isElite;
+  if (any(['一段线', '特控线', '第一批次录取', '一本录取', '一段录取', '特控'])) return ab.isYiduan;
+
+  // —— 政治面貌条款 ——
+  if (any(['中共党员', '党员', '预备党员'])) return ab.isParty;
+  if (any(['团员'])) return ab.isParty || ab.political === '共青团员';
+
+  // —— 普通话条款 ——
+  if (/普通话/.test(c)) {
+    if (/一甲|一乙/.test(c)) return ab.putonghuaRank >= 2;
+    if (/二甲/.test(c)) return ab.putonghuaRank >= 2;
+    if (/二乙/.test(c)) return ab.putonghuaRank >= 1;
+    return ab.putonghuaRank >= 2;   // 未写等级按二甲（教师岗通行标准）
+  }
+
+  // —— 荣誉条款（奖学金，注意先具体后宽泛）——
+  if (any(['国家奖学金']) && !any(['励志'])) return ab.hasGuojiang;
+  if (any(['国家励志'])) return ab.hasGuoliZhi;
+  if (any(['省政府奖学金', '省奖学金', '省政府奖'])) return ab.hasShengzhengFu || ab.hasGuojiang;
+  if (any(['校级一等', '校一等', '一等奖学金']) && !any(['二等', '三等'])) return ab.hasSchoolFirst;
+  if (any(['校级二等', '校二等', '二等奖学金', '综合奖学金']) && !any(['一等', '三等'])) return ab.hasSchoolSecond || ab.hasSchoolFirst;
+  if (any(['校级三等', '校三等', '三等奖学金']) && !any(['一等', '二等'])) return ab.hasSchoolThird || ab.hasSchoolSecond || ab.hasSchoolFirst;
+  if (any(['奖学金'])) return ab.hasGuojiang || ab.hasShengzhengFu || ab.hasSchoolFirst || ab.hasSchoolSecond || ab.hasSchoolThird;
+
+  // —— 荣誉条款（优秀毕业生/称号）——
+  if (any(['省级优秀毕业生', '省优', '省级优秀'])) return ab.hasShengYouni;
+  if (any(['校级优秀毕业生', '校优', '校级优秀'])) return ab.hasXiaoYouni || ab.hasShengYouni;
+  if (any(['优秀学生干部', '优秀团干部', '优秀学生', '优秀团员'])) return ab.hasShengYouni || ab.hasXiaoYouni || ab.hasSchoolFirst;
+
+  // —— 竞赛条款 ——
+  if (any(['师范生技能竞赛一等奖', '师范生技能赛一等奖', '技能大赛一等奖'])) return ab.hasShengSkill1;
+  if (any(['师范生技能竞赛二等奖', '师范生技能赛二等奖', '技能大赛二等奖'])) return ab.hasShengSkill1 || ab.hasShengSkill2;
+  if (any(['师范生技能竞赛三等奖', '师范生技能赛三等奖', '技能大赛三等奖', '技能竞赛获奖'])) return ab.hasShengSkill1 || ab.hasShengSkill2 || ab.hasShengSkill3;
+  if (any(['全国师范生', '国家师范生', '国赛'])) return ab.hasGuoSkill || ab.hasShengSkill1 || ab.hasShengSkill2;
+  if (any(['学科竞赛一等奖', '竞赛一等奖'])) return ab.hasXueke1 || ab.hasGuoDaSai;
+  if (any(['学科竞赛二等奖', '竞赛二等奖'])) return ab.hasXueke1 || ab.hasXueke2;
+  if (any(['学科竞赛三等奖', '竞赛三等奖'])) return ab.hasXueke1 || ab.hasXueke2 || ab.hasXueke3;
+  if (any(['奥赛', '学科奥赛'])) return ab.hasAoKe;
+  if (any(['技能竞赛', '技能赛', '师范技能'])) return ab.hasShengSkill1 || ab.hasShengSkill2 || ab.hasShengSkill3;
+  if (any(['竞赛', '获奖'])) return ab.hasShengSkill1 || ab.hasShengSkill2 || ab.hasShengSkill3 || ab.hasXueke1 || ab.hasXueke2 || ab.hasAoKe || ab.hasGuoDaSai;
+
+  // —— 综测/排名条款（含"浙师大杭师大前50%""浙江户籍前40%"等）——
+  const rankM = c.match(/(?:前|排名|综合测评|成绩|综测)[^0-9]{0,8}?(\d{1,2})\s*%/);
+  if (rankM) {
+    const req = parseInt(rankM[1], 10);
+    return !!ab.zongce && ab.zongce <= req;
+  }
+
+  // —— 户籍+排名组合（"浙江户籍前40%"：浙江户籍且排名达标）——
+  // 注意："生源(可不受专业限制)"是括号豁免说明，不算独立资格条款；仅"浙江户籍/生源"或"XX县户籍"才判
+  const hasHukouClause = /户籍|生源/.test(c) && !/可不受|不受专业|放宽/.test(c);
+  if (hasHukouClause) {
+    // 精确户籍匹配：提取"XX市/县/区户籍"或"XX户籍"的地名，与用户 city/district 比对
+    let hukouOK = ab.inZhejiang;   // 未写明地域默认浙江省内
+    const mCity = c.match(/([\u4e00-\u9fa5]{2,5}?市)户籍/);
+    const mDistrict = c.match(/([\u4e00-\u9fa5]{2,5}?[县区])户籍/);
+    const mPlain = c.match(/([\u4e00-\u9fa5]{2,5}?)户籍/);   // "义乌户籍"无后缀
+    if (mCity) {
+      hukouOK = ab.city === mCity[1];
+    } else if (mDistrict) {
+      hukouOK = ab.district === mDistrict[1];
+    } else if (mPlain) {
+      const place = mPlain[1];
+      if (place === '浙江' || place === '浙江省') hukouOK = ab.inZhejiang;
+      else hukouOK = ab.district.indexOf(place) !== -1 || ab.city.indexOf(place) !== -1;
+    } else if (/浙江省|浙江/.test(c)) {
+      hukouOK = ab.inZhejiang;
+    }
+    if (rankM) {
+      const req = parseInt(rankM[1], 10);
+      return !!ab.zongce && ab.zongce <= req && hukouOK;
+    }
+    return hukouOK;
+  }
+
+  // —— 师范类要求 ——
+  if (any(['师范专业', '师范类', '师范院校'])) {
+    if (any(['非师范'])) return true;   // "非师范可报"直接过
+    return ab.isNormal;
+  }
+
+  // 无法识别的条款 → null（交给调用方决定）
+  return null;
+}
+
+// 主判定：gate 文本（可能是 honorGate/schoolGate/condition）是否被用户命中
+// 返回 { hit: bool|null, clauses: [{t, hit, reason}] }
+function evalGate(gate, ab) {
+  if (!gate) return { hit: true, clauses: [] };
+  const clauses = splitClauses(gate);
+  if (!clauses.length) return { hit: null, clauses: [] };
+  const checked = [];
+  let anyHit = false, anyUnknown = false;
+  for (const cl of clauses) {
+    const r = clauseHit(cl, ab);
+    checked.push({ t: cl, hit: r });
+    if (r === true) anyHit = true;
+    if (r === null) anyUnknown = true;
+  }
+  // 命中任一 → 通过；无命中但有无法识别的条款 → 不确定；全部明确未中 → 不通过
+  return { hit: anyHit ? true : (anyUnknown ? null : false), clauses: checked };
+}
+
+// 学科词表：长词在前，避免 "历史与社会" 被同时计入 "历史"
+const SUBJECT_WORDS = [
+  "历史与社会", "道德与法治", "思想政治", "信息技术", "心理健康", "特殊教育", "学前教育", "社会法治", "社政",
+  "语文", "数学", "英语", "科学", "物理", "化学", "生物", "历史", "地理", "政治", "体育", "音乐", "美术", "全科"
+];
+
+// 学段写法 → 该写法覆盖的学段集合（公告常混用「中学/中小学/普高/职高」）
+const STAGE_ALIAS = {
+  "幼儿园": ["幼儿园"], "幼儿": ["幼儿园"], "学前": ["幼儿园"],
+  "小学": ["小学"],
+  "初中": ["初中"],
+  "高中": ["高中"], "普高": ["高中"], "职高": ["高中"],
+  "中学": ["初中", "高中"],          // 未指明初/高中时，两个学段都算
+  "中小学": ["小学", "初中"]
+};
+
+// 判断一个片段归属哪个学段：复合词「中小学」优先，具体学段次之，最后才用泛化的「中学」
+function detectStage(text) {
+  const t = String(text || "");
+  if (t.indexOf("中小学") !== -1) return STAGE_ALIAS["中小学"];
+  for (const k of ["幼儿园", "学前", "初中", "高中", "普高", "职高", "小学", "幼儿"]) {
+    if (t.indexOf(k) !== -1) return STAGE_ALIAS[k];
+  }
+  if (t.indexOf("中学") !== -1) return STAGE_ALIAS["中学"];
+  return null;
+}
+
+// 从文本中抽取学科（命中长词后挖除，避免短词重复计入）
+function pickSubjects(text) {
+  let rest = String(text || "");
+  const out = [];
+  for (const w of SUBJECT_WORDS) {
+    if (rest.indexOf(w) !== -1) {
+      out.push(w);
+      rest = rest.split(w).join(" ");
+    }
+  }
+  return out;
+}
+
+// 按学段拆分岗位实际招聘的学科。公告 count/posts 文本常见 3 种写法：
+//   A 学段块： "小学岗：语文28、数学22、英语8；初中岗：…"      → 整块归属该学段
+//   B 逐条前缀："小学语文15、数学8、英语5"（后续项省略前缀）    → 前缀继承
+//   C 否定语：  "无小学数学岗" / "不招小学语文"                → 该学科本学段明确不招
+// 返回 { subjects, negated, reliable, complete }
+//   complete=true 表示公告已把各学段学科完整枚举（无「等/约/其余/详见附件」），可据此直接判不符
+function getStageSubjects(job, stage) {
+  const rawCount = job.count || "";
+  const raw = (rawCount + "\n" + (job.posts || "")).replace(/\n/g, "、");
+  const negated = new Set();
+  const found = new Set();
+  let sawStage = false;
+
+  // ① 先摘掉显式否定语，避免 "无小学数学岗" 被当成正面匹配
+  const NEG_RE = /(无|不招|不设|不含|没有|非)\s*(小学|初中|高中|幼儿园|学前|中小学|中学)\s*([^、。；;（()\n，,]{0,10})/g;
+  const cleaned = raw.replace(NEG_RE, (m, neg, st, tail) => {
+    if ((STAGE_ALIAS[st] || []).indexOf(stage) !== -1) {
+      sawStage = true;
+      pickSubjects(tail).forEach(s => negated.add(s));
+    }
+    return " ";
+  });
+
+  // ② 统一扫描：按分隔符切项；带学段标记的项更新归属，未标记的项继承上一项归属。
+  //    （这样 "小学语文15、数学8、英语5" 里的数学/英语才不会漏；"高中美术、中学数学" 也能各归其位）
+  const items = cleaned.split(/[；;。、，,（()\/|\n]+/);
+  let cur = null;
+  for (const it of items) {
+    const t = String(it || "").trim();
+    if (!t) continue;
+    const st = detectStage(t);
+    if (st) { cur = st; sawStage = true; }
+    if (!cur || cur.indexOf(stage) === -1) continue;
+    pickSubjects(t).forEach(s => found.add(s));
+  }
+
+  const subjects = Array.from(found).filter(s => !negated.has(s));
+  // 枚举是否完整：出现「等/约/其余/部分/详见/待查/附件」说明只是摘要，不能据此判不符
+  const complete = !/(等|约|其余|其它|其他学科|部分|详见|待查|待定|见附件|查附件|见岗位表|详见岗位表|学科待查)/.test(rawCount);
+  return {
+    subjects,
+    negated: Array.from(negated),
+    reliable: sawStage && subjects.length > 0,
+    complete: complete
+  };
 }
 
 // 岗位荣誉门槛的等级要求（注意先匹配更具体的写法）
@@ -169,7 +597,11 @@ function normalizeJob(job) {
   if (r.hukou === 'none') hukouText = '不限';
   else if (r.hukou === 'zhejiang') hukouText = '浙江省';
   else if (r.hukou === 'unknown') hukouText = '浙江省（默认）';
-  else if (r.hukou) hukouText = r.hukou;
+  else if (r.hukou) {
+    // 防御：拼音/非中文值显示成「浙江省」而非裸拼音字符串
+    if (!/[\u4e00-\u9fa5]/.test(r.hukou)) hukouText = '浙江省（默认值异常）';
+    else hukouText = r.hukou;
+  }
 
   let certText = '不限';
   if (r.certLevel === 'none') certText = '应届可后补';
@@ -221,6 +653,9 @@ function matchJobs(profile, jobs, options) {
   const zongce = parseFloat(profile.zongce) || null;
   const stage = options.stage;
   const majorSubject = normalizeSubject(profile.major || '');
+  // 本硕双专业：硕士用户可填本科专业，两者都参与学科判定（部分地区看本硕是否一致）
+  const majorBachelorSubject = normalizeSubject(profile.majorBachelor || '');
+  const majorSubjects = new Set([majorSubject, majorBachelorSubject].filter(Boolean));
 
   // 用户各学科教资的最高学段（{ '数学': 2 } 表示持有初中数学教资）
   const certSubjects = {};
@@ -236,15 +671,15 @@ function matchJobs(profile, jobs, options) {
   if (majorSubject) userSubjectsRaw.add(majorSubject);
   const userSubjects = expandSubjects(userSubjectsRaw);
 
-  // 用户荣誉最高等级（预设 + 自定义估算）
-  const userMaxHonor = Math.max(0, ...userHonors.map(h => HONOR_RANK[h] || estimateHonorLevel(h)));
-
   return jobs.map(rawJob => {
     const j = normalizeJob(rawJob);
     let score = 0;
     const reasons = [];  // 硬性不符
     const risks = [];    // 需人工核实（待确认）
     const notes = [];    // 参考提示（不影响档位）
+    // OR型资格岗（如提前批"满足12条之一即可"）：院校/荣誉门槛不匹配时降级为待确认而非不符
+    const softGate = !!(j.rules && j.rules.softGate);
+    const gatePush = msg => { (softGate ? risks : reasons).push(msg); };
 
     // 0. 学段过滤（"中学"同时覆盖初中和高中两个tab）
     const stageOK = j.stage.includes(stage)
@@ -314,10 +749,31 @@ function matchJobs(profile, jobs, options) {
         reasons.push('限浙江省户籍/生源');
       }
     } else {
-      // 具体市/区县限制
-      if (userDistrict && hk.includes(userDistrict)) {
+      // 具体市/区县限制 —— 用 CITY_DISTRICTS / DISTRICT_TO_CITY 做精确归属判定
+      // 规则：hk 形如"宁波市" → 用户 city 命中即合规；hk 形如"海曙区" → 用户 district 命中即合规；若用户在同市但选错/未选具体区 → 待确认
+      let districtHit = false;   // 用户精确命中岗位要求的区/县
+      let cityHit = false;       // 用户精确命中岗位要求的市
+      let cityCovers = false;    // 岗位限某区，用户在同市但未选该区
+      const hkDistricts = [];    // hk 中识别到的区县级名字
+      for (const [city, dists] of Object.entries(CITY_DISTRICTS)) {
+        if (hk === city) cityHit = userCity === city;
+        for (const d of dists) {
+          if (hk.includes(d)) {
+            hkDistricts.push(d);
+            if (userDistrict === d) districtHit = true;
+            else if (DISTRICT_TO_CITY[userDistrict] === city) cityCovers = true;
+          }
+        }
+      }
+      // hk 不在字典里（罕见旧值或拼音残留）：fallback 用 includes
+      if (hkDistricts.length === 0 && !cityHit) {
+        if (userDistrict && hk.includes(userDistrict)) districtHit = true;
+        else if (userCity && hk.includes(userCity)) cityHit = true;
+      }
+
+      if (districtHit || cityHit) {
         score += 30;
-      } else if (userCity && hk.includes(userCity)) {
+      } else if (cityCovers) {
         score += 25;
         risks.push(`户籍要求${hk}，需确认你的区县是否在范围内`);
       } else if (phdRelax) {
@@ -328,10 +784,18 @@ function matchJobs(profile, jobs, options) {
       }
     }
 
-    // 5. 学历
-    if (j.needMaster) {
+    // 5. 学历（支持按学段 + 按学科细分：degreeByStage 优先于 needMaster）
+    //   例：高中数学岗硕士起 → degreeByStage:{高中:"硕士"}
+    //       小学英语限硕士 → degreeByStage:{"英语-小学":"硕士"}（学科-学段组合键，优先于纯学段键）
+    const dbs = (j.rules && j.rules.degreeByStage) || {};
+    // 用户实际报考的学科方向（专业归一化 + 教资学科），用于匹配"学科-学段"键
+    const userMajorSubj = majorSubject || (userCerts[0] ? userCerts[0].replace(/^(幼儿园|小学|初中|高中)/, '') : '');
+    // 判定顺序：学科-学段 精确键 > 纯学段键 > needMaster
+    const needMasterBySubject = dbs[userMajorSubj + '-' + stage] === '硕士' || dbs[userMajorSubj + '·' + stage] === '硕士';
+    const needMasterNow = needMasterBySubject ? true : (dbs[stage] === '硕士' ? true : j.needMaster);
+    if (needMasterNow) {
       if (degreeRank >= 3) score += 20;
-      else reasons.push('要求硕士研究生及以上');
+      else reasons.push(needMasterBySubject ? `要求硕士研究生及以上（${stage}段${userMajorSubj}岗）` : '要求硕士研究生及以上（' + stage + '段）');
     } else if (degreeRank >= 2) {
       score += 20;
     } else if (degreeRank === 1) {
@@ -342,19 +806,46 @@ function matchJobs(profile, jobs, options) {
       score += 20; // 未填学历，先按满足处理
     }
 
-    // 6. 院校门槛
-    if (j.schoolGate) {
-      const st = profile.schoolType || '';
-      const okSchool = /双一流/.test(st) && /双一流/.test(j.schoolGate)
-        || /部属师范/.test(st)
-        || (/浙师大/.test(st) && /浙师大/.test(j.schoolGate))
-        || (degreeRank >= 3 && /硕士/.test(j.schoolGate))
-        || (/境外高校/.test(st) && /境外|国外|海外|留学|国（境）外|归国/.test(j.schoolGate));
-      if (okSchool) {
+    // 6. 资格条款判定（提前批"满足之一"OR 结构）：院校门槛+荣誉门槛合并解析
+    // 用结构化档案逐条比对；命中任一条款即通过，避免一刀切待确认
+    const ability = buildAbilitySet(profile);
+    const gateText = [j.schoolGate, j.honorGate].filter(Boolean).join(' ');
+    const isUnknownGate = /unknown/i.test([j.schoolGate, j.honorGate].filter(Boolean).join(' '));
+    let gateEval = null, gateHitText = '';
+    if (gateText.trim() && !isUnknownGate) {
+      gateEval = evalGate(gateText, ability);
+      if (gateEval.hit === true) {
         score += 15;
+        const hitClause = (gateEval.clauses.find(c => c.hit === true) || {}).t || '';
+        gateHitText = hitClause;
+        notes.push(`资格已达标：${hitClause}`);
+      } else if (gateEval.hit === null) {
+        // 部分条款无法识别 → 待确认（不判死）
+        score += 7;
+        risks.push(`报考资格（${gateText.slice(0, 60)}…）部分条款需人工核对，建议对照公告确认`);
       } else {
-        reasons.push(`院校门槛：${j.schoolGate}`);
+        // 全部明确未命中
+        gatePush(`报考资格：${gateText.slice(0, 80)}`);
       }
+    } else if (j.schoolGate || (j.honorGate && j.honorGate !== 'unknown')) {
+      // 纯院校门槛（无荣誉条款）或纯荣誉门槛（无院校条款）分别处理
+      const sg = j.schoolGate ? evalGate(j.schoolGate, ability) : null;
+      const hg = j.honorGate && j.honorGate !== 'unknown' ? evalGate(j.honorGate, ability) : null;
+      const results = [sg, hg].filter(Boolean);
+      if (results.some(r => r.hit === true)) {
+        score += 15;
+        const hitClause = results.map(r => (r.clauses.find(c => c.hit === true) || {}).t).find(Boolean) || '';
+        if (hitClause) notes.push(`资格已达标：${hitClause}`);
+      } else if (results.some(r => r.hit === null)) {
+        score += 7;
+        risks.push('报考资格部分条款需人工核对，建议对照公告确认');
+      } else if (results.length) {
+        gatePush('报考资格条款未满足');
+      } else {
+        score += 15;
+      }
+    } else {
+      score += 15; // 无门槛
     }
 
     // 6.3 师范类专业门槛（个别地区限师范类才能报；浙江实际：本科通道常限师范类，硕士通道一般不限）
@@ -364,47 +855,77 @@ function matchJobs(profile, jobs, options) {
       else risks.push('岗位要求师范类专业（本科），请确认你的专业是否属于师范类');
     }
 
-    // 6.5 学科匹配：岗位招特定学科时，专业或教资须对口
+    // 6.5 学科匹配：按用户选定的学段 stage 拆分岗位实际招的学科，避免混合学段误判
+    // （例：南湖#27 顶层含数学，但原文写"无小学数学岗"、小学段只招语文/美术 → 数学档案应判不符）
+    const stageInfo = getStageSubjects(j, stage);   // { subjects, negated, reliable }
     let subjectOverlap = [];
-    if (j.subjects.length) {
-      subjectOverlap = j.subjects.filter(s => userSubjects.has(s));
+    const subjectsForMatch = stageInfo.reliable ? stageInfo.subjects : (j.subjects || []);
+    // 公告白纸黑字写了"无/不招 本学段某学科" → 直接判不符
+    const negHit = (stageInfo.negated || []).filter(s => userSubjects.has(s));
+    if (negHit.length) {
+      reasons.push(`该公告${stage}段明确不招${negHit.join('、')}教师（岗位表中未设此学科岗）`);
+    } else if (subjectsForMatch.length) {
+      subjectOverlap = subjectsForMatch.filter(s => userSubjects.has(s));
       if (subjectOverlap.length) {
         score += 10;
       } else if (userSubjects.size === 0) {
-        risks.push(`岗位学科：${j.subjects.join('、')}，请先填写专业或教资再判断`);
+        risks.push(`岗位学科：${subjectsForMatch.join('、')}，请先填写专业或教资再判断`);
+      } else if (stageInfo.reliable && !stageInfo.complete && (j.subjects || []).some(s => userSubjects.has(s))) {
+        // 公告只是摘要（含「等/约/其余/详见附件」），本学段岗位表可能未展开 → 提示查附件而非一刀切
+        risks.push(`${stage}段公告列出的是${subjectsForMatch.join('、')}，未见你的${Array.from(userSubjects).join('/')}岗位表或有细分，请查附件岗位表确认`);
       } else {
-        reasons.push(`岗位学科：${j.subjects.join('、')}，与你的专业（${majorSubject || '未填'}）/教资不对口`);
+        reasons.push(`岗位学科：${subjectsForMatch.join('、')}，与你的专业（${majorSubject || '未填'}）/教资不对口`);
       }
     } else if (/专业对口/.test(j.condition || '') && majorSubject) {
       notes.push(`公告要求专业对口，请按「${majorSubject}」方向对照岗位表选岗`);
     }
 
-    // 7. 荣誉门槛（奖学金/竞赛等级 + 综测排名替代通道）
-    if (j.honorGate && j.honorGate !== 'unknown') {
-      const req = honorRequirementLevel(j.honorGate);
-      const rankAlt = rankAlternativePercent(j);
-      const passByRank = !!(rankAlt && zongce && zongce <= rankAlt);
-      if (userMaxHonor >= req || passByRank) {
-        score += 15;
-        if (passByRank && userMaxHonor < req) {
-          notes.push(`你的${zongce}%排名满足"前${rankAlt}%"替代通道`);
+    // 6.6 数学岗限「数学类/学科教学(数学)」专业（中学数学岗常见口径）
+    // 本硕双专业 + 按学段拆分：硕士/本科任一为数学类（非小学教育）即视为专业对口
+    // 双重条件：①本学段确实招数学 ②用户自己就是奔数学岗去的（否则语文档案不该被数学岗限制打扰）
+    // 升级：用户专业落在「小学教育/初等教育」且排除后仍非数学类 → 公告明文「不含小学教育」应直接判不符
+    // mathMajorOnly=true：该岗所有含数学学段都限数学类（排除小学教育）
+    // mathMajorOnlyStages=["初中","高中"]：仅这些学段限数学类（小学段接受小学教育），按当前 stage 精确判定
+    const mathStageLimited = (j.rules && j.rules.mathMajorOnly) ? true
+      : (j.rules && Array.isArray(j.rules.mathMajorOnlyStages) && j.rules.mathMajorOnlyStages.includes(stage));
+    if (mathStageLimited && subjectsForMatch.includes('数学') && userSubjects.has('数学')) {
+      const mastersIsMathClass = !/小学教育|初等教育/.test(profile.major || '') && (majorSubject === '数学');
+      const bachelorsIsMathClass = !/小学教育|初等教育/.test(profile.majorBachelor || '') && (majorBachelorSubject === '数学');
+      if (!(mastersIsMathClass || bachelorsIsMathClass)) {
+        const shownMajor = bachelorsIsMathClass ? (profile.majorBachelor || '本科专业') : (profile.major || '当前专业');
+        const isXiaoxueMajor = /小学教育|初等教育/.test(profile.majorBachelor || '') || /小学教育|初等教育/.test(profile.major || '');
+        if (isXiaoxueMajor) {
+          reasons.push(`数学岗限「数学类/统计学类/学科教学(数学)」等专业，公告未将小学教育(040107)列入目录，${shownMajor}不在目录 → 不能报`);
+          // 告诉后续的教资段「学科专业已判不符」，不要再为同一岗位追加教资理由
+          j.__majorRejected = true;
+        } else {
+          risks.push(`数学岗限「数学类/学科教学(数学)」等专业，${shownMajor}不在目录，能否按初中数学教资报考请电话确认`);
         }
-      } else if (userMaxHonor > 0 || zongce) {
-        score += 7;
-        risks.push(`荣誉门槛：${j.honorGate}，你的荣誉/排名可能不够，建议电话确认`);
-      } else {
-        reasons.push(`荣誉门槛：${j.honorGate}`);
       }
-    } else if (j.honorGate === 'unknown') {
-      risks.push('荣誉门槛需查看原公告核实');
-    } else {
-      score += 15;
     }
+
+    // 6.7 教学经历要求（社招岗常见「须N年及以上相应学科教学经历」，应届/无经历者不可报）
+    // 仅当用户奔着该学科去时才触发，避免无关学科被误伤
+    if (j.rules && j.rules.experienceRequired) {
+      const isFresh = profile.graduateYear === '2026' || profile.graduateYear === '2027';
+      const relevant = !subjectsForMatch.includes('数学') || userSubjects.has('数学');
+      if (isFresh && relevant) {
+        reasons.push(`须${j.rules.experienceRequired}，应届无教学经历不可报`);
+        j.__majorRejected = true;
+      } else if (relevant) {
+        risks.push(`岗位要求「${j.rules.experienceRequired}」，请确认你的教学经历是否符合`);
+      }
+    }
+
+    // 7. 荣誉门槛已并入第 6 节资格条款判定（V3.1），此处不再重复
 
     // 8. 教资（考哪门课就要哪门教资；岗位学科已判不符时不再重复判）
     const certReq = j.certLevelReq;
     const needLv = STAGE_CERT_LEVEL[stage] || 1;
-    if (certReq === 'none') {
+    // 6.6 段已经把"专业不对口"判成不符（如 #133 小学教育类被公告明文排除），教资段不再追加理由
+    if (j.__majorRejected) {
+      // 跳过整个教资段
+    } else if (certReq === 'none') {
       score += 15; // 应届可后补或免
     } else if (certReq === 'unknown') {
       score += 12;
@@ -461,6 +982,9 @@ function matchJobs(profile, jobs, options) {
         reasons.push(`须${j.certText}`);
       }
     }
+
+    // 8.5 普通话检查已移除：浙江教师招聘普通话要求为公开常识（语文二甲，其他学科二乙），
+    // 无需在匹配档位中作为差异化条件反复提示，避免对数学等学科用户造成噪音。
 
     // 9. 判定档位：reasons→不符；risks→待确认；notes→不影响
     let status;
