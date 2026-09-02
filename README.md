@@ -9,17 +9,28 @@
 - 匹配结果分三档：可报 / 待确认 / 不符，并说明原因
 - 岗位数据来自浙江省各地教育局/政府官网公开招聘公告，附来源链接
 
-## 在线演示
+## 文件说明
 
-https://jck19924362.github.io/zj-teacher-match/
+| 文件 | 用途 |
+|------|------|
+| `index.html` | 网页入口（含表单+结果展示） |
+| `data.js` | 岗位库（171 条岗位，2026 届） |
+| `match.js` | 匹配引擎（户籍/学科/专业/学历/资格条款逐条判定） |
+| `test-v3-tmp.js` | 主回归测试：分档数字 + 关键岗位抽查 |
+| `verify-browser.js` | 浏览器加载顺序验证（防内联脚本覆盖 match.js） |
+| `backfill-rules.js` / `backfill-degree.js` / `fix-math-stage.js` | 规则字段回填工具（幂等可重跑） |
 
 ## 技术栈
 
-纯前端：HTML + CSS + JavaScript，无需后端。
+纯前端：HTML + CSS + JavaScript，无需后端。LocalStorage 保存档案。
 
-## 作者
+## 本地预览
 
-嘉兴大学平湖师范学院小学教育（数学方向）2027 届本科在读。
+```bash
+cd zj-teacher-match-v2
+python -m http.server 8000
+# 浏览器打开 http://localhost:8000
+```
 
 ## 免责声明
 
