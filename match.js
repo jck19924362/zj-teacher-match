@@ -504,8 +504,29 @@ function rankAlternativePercent(job) {
   return m ? parseInt(m[1], 10) : null;
 }
 
-// 从公告标题+条件里识别面向的届别（如"2026届""2024-2026届"），识别不到返回 null
+// 从公告文本中解析最晚一个日期（用于推断届别/时间线排序）
+function parseLatestDate(text) {
+  const re = /(\d{4})年(\d{1,2})月(\d{1,2})日/g;
+  const dates = [];
+  let m;
+  while ((m = re.exec(text || '')) !== null) {
+    dates.push(new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10)));
+  }
+  if (!dates.length) return null;
+  // 跨年修正：后一个日期早于前一个，说明跨年了
+  for (let i = 1; i < dates.length; i++) {
+    if (dates[i] < dates[i - 1]) {
+      dates[i] = new Date(dates[i].getFullYear() + 1, dates[i].getMonth(), dates[i].getDate());
+    }
+  }
+  return dates.reduce((a, b) => (b > a ? b : a));
+}
+
+// 从公告标题+条件里识别面向的届别（如"2026届""2024-2026届"），识别不到按报名日期推断
 function jobTargetYears(job) {
+  // 1. 显式 year 字段
+  if (job.year) return [job.year];
+  // 2. 标题/条件中的届别（支持范围）
   const text = (job.title || '') + ' ' + (job.condition || '');
   const years = new Set();
   const range = text.match(/(20(2[4-9]))\s*[-—~至]\s*(20(2[4-9]))\s*届/);
@@ -513,11 +534,18 @@ function jobTargetYears(job) {
     for (let y = parseInt(range[1], 10); y <= parseInt(range[3], 10); y++) years.add(y);
   }
   (text.match(/20(2[4-9])届/g) || []).forEach(s => years.add(parseInt(s, 10)));
-  return years.size ? Array.from(years) : null;
+  if (years.size) return Array.from(years).sort((a, b) => a - b);
+  // 3. 按报名日期推断：2026年9月1日前为 2026 届，及以后为 2027 届
+  const d = parseLatestDate(job.enroll);
+  if (d) {
+    const cutoff = new Date(2026, 8, 1); // 2026-09-01
+    return [d < cutoff ? 2026 : 2027];
+  }
+  // 4. 默认
+  return [2026];
 }
 
-// 岗位招聘届别：默认 2026（数据源自 2026 届汇总表）；
-// 标题含「2027届」等则自动识别；也可在岗位对象上显式写 year 覆盖
+// 岗位招聘届别：取 jobTargetYears 中最大一年
 function jobYear(job) {
   if (job.year) return job.year;
   const ys = jobTargetYears(job);
@@ -677,6 +705,8 @@ function matchJobs(profile, jobs, options) {
     const reasons = [];  // 硬性不符
     const risks = [];    // 需人工核实（待确认）
     const notes = [];    // 参考提示（不影响档位）
+    let cohortMismatch = false; // 公告面向届别早于用户届别（仅届别不符）
+    // （届别不匹配的岗位直接按"不符"处理，不再单独标记"已结束"）
     // OR型资格岗（如提前批"满足12条之一即可"）：院校/荣誉门槛不匹配时降级为待确认而非不符
     const softGate = !!(j.rules && j.rules.softGate);
     const gatePush = msg => { (softGate ? risks : reasons).push(msg); };
@@ -718,8 +748,9 @@ function matchJobs(profile, jobs, options) {
             reasons.push(`公告面向${label}届应届毕业生，往届生不可报`);
           }
         } else {
-          // 用户比公告届别晚（还没毕业），此公告作参考样本
-          notes.push(`此为${label}届公告，供参考；${userYear}届请关注今年下半年起发布的同类公告`);
+          // 用户届别晚于公告面向届别（公告面向更早届别）
+          cohortMismatch = true;
+          reasons.push(`公告面向${label}届，你的届别为${userYear}届，届别不匹配`);
         }
       } else if (profile.graduateYear === 'other') {
         if (allowsPast) score += 5;
@@ -804,6 +835,16 @@ function matchJobs(profile, jobs, options) {
       risks.push('公告未明确专科学历可报，请电话确认是否放宽至大专');
     } else {
       score += 20; // 未填学历，先按满足处理
+    }
+
+    // 5.1 硕士类型（学硕/专硕）偏好：仅对明确标注 needMasterType 的岗位生效，其余岗位不受影响
+    const needMt = j.rules && j.rules.needMasterType;
+    if (needMt && profile.degree === '硕士') {
+      if (!profile.degreeType) {
+        risks.push(`岗位偏好${needMt}（学硕/专硕），请确认你的硕士类型是否符合`);
+      } else if (profile.degreeType !== needMt) {
+        risks.push(`岗位要求${needMt}，你的硕士类型为${profile.degreeType}，能否报考请电话确认`);
+      }
     }
 
     // 6. 资格条款判定（提前批"满足之一"OR 结构）：院校门槛+荣誉门槛合并解析
@@ -991,8 +1032,10 @@ function matchJobs(profile, jobs, options) {
     if (reasons.length > 0) status = '不符';
     else if (risks.length > 0) status = '待确认';
     else status = '可报';
+    // 仅届别不符（其余条件都符合）：对 2027 届用户而言，2026 届公告属此类，前端单独成子模块作参考样本
+    const cohortOnly = (status === '不符' && cohortMismatch && reasons.length === 1);
 
-    return { ...j, score, status, reasons, risks, notes };
+    return { ...j, score, status, reasons, risks, notes, cohortOnly };
   })
   .filter(x => x !== null)
   .sort((a, b) => b.score - a.score);
