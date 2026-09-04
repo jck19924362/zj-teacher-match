@@ -39,11 +39,13 @@
       content: ""; position: absolute; top: -80px; right: -50px;
       width: 280px; height: 280px; border-radius: 50%;
       background: radial-gradient(circle, rgba(255,255,255,0.14) 0%, transparent 70%);
+      z-index: 0;
     }
     .header::after {
       content: ""; position: absolute; bottom: -60px; left: -60px;
       width: 240px; height: 240px; border-radius: 50%;
       background: radial-gradient(circle, rgba(255,255,255,0.10) 0%, transparent 70%);
+      z-index: 0;
     }
     .header .deco-dot {
       position: absolute; width: 6px; height: 6px; border-radius: 50%;
@@ -70,6 +72,7 @@
       margin: 0 16px;
       padding: 6px 6px 0;
       position: relative;
+      z-index: 2;
     }
     .stage-tab {
       flex: 1;
@@ -339,6 +342,13 @@
     .job-sub { font-size: 12px; color: var(--ink-sub); margin-top: 4px; }
     .job-tip { color: var(--maybe); font-size: 12px; margin-top: 6px; }
     .job-reason { color: var(--no); font-size: 12px; margin-top: 6px; }
+    .job-cohort { background: #EAF2FB; border: 1px solid #BBD6F2; border-radius: 8px; padding: 6px 10px; color: #1F5C99; font-size: 12px; margin: 6px 0; line-height: 1.5; }
+    .job-card.cohort { background: #F5F9FE; border-left-color: #2E7FD4; }
+    .job-card.cohort .job-status { background: #2E7FD4; color: #fff; }
+    .sub-group-title { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--ink); margin: 16px 0 8px; padding-bottom: 6px; border-bottom: 1px dashed var(--line); }
+    .sub-group-title .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .sub-group-title .dot.cohort { background: #2E7FD4; }
+    .sub-group-title .dot.real { background: var(--no); }
     .job-note { color: #8A97A5; font-size: 12px; margin-top: 6px; }
     .job-hit {
       color: var(--ok); font-size: 12px; margin-top: 6px;
@@ -361,24 +371,209 @@
       padding: 2px 8px; border-radius: 999px; margin-left: 6px; font-weight: normal;
       vertical-align: 1px;
     }
+    .fresh-bar {
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+      background: #F7F9FC; border: 1px solid var(--line);
+      border-radius: 10px; padding: 9px 12px; margin: 8px 0 12px;
+      font-size: 12.5px; color: var(--ink-sub); line-height: 1.6;
+    }
+    .fresh-bar .f-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #fff; border: 1px solid var(--line);
+      border-radius: 999px; padding: 2px 10px; font-size: 12px; color: var(--ink);
+    }
+    .fresh-bar .f-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .f-dot.live { background: #17A66B; }
+    .f-dot.soon { background: #E5484D; }
+    .f-dot.ended { background: #C9CFD6; }
+    .f-dot.unknown { background: #B9C2CE; }
+    .site-foot {
+      text-align: center; font-size: 12px; color: #8A97A5;
+      padding: 18px 16px 28px; line-height: 1.8;
+      border-top: 0.5px solid var(--line); margin-top: 24px;
+    }
+    .site-foot a { color: #8A97A5; }
+    .site-foot-stat {
+      margin-top: 10px; font-size: 12px; color: #B9C2CE;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 12px; border-radius: 999px;
+      background: rgba(155,155,155,0.06);
+    }
     .summary { font-size: 14px; color: var(--ink-sub); margin-bottom: 14px; }
     .summary b { font-size: 16px; }
     .summary-bar {
       display: flex; gap: 10px; margin: 10px 0 14px;
     }
     .summary-item {
-      flex: 1; text-align: center; padding: 12px 6px; border-radius: 12px;
+      flex: 1; text-align: center; padding: 12px 6px 8px; border-radius: 14px;
       background: #fff; border: 1px solid var(--line); position: relative; overflow: hidden;
+      cursor: pointer; transition: all 0.18s; box-shadow: 0 2px 6px rgba(31,45,61,0.04);
+    }
+    .summary-item.active { box-shadow: 0 0 0 2px currentColor; }
+    .summary-item:active { transform: scale(0.97); }
+    .summary-item::after {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
     }
     .summary-item .n { font-size: 26px; font-weight: 800; line-height: 1.1; }
     .summary-item .t { font-size: 12px; color: var(--ink-sub); margin-top: 2px; }
     .summary-item.ok { background: linear-gradient(135deg, #EDFBF3, #F4FDF8); border-color: #C9EBD8; }
+    .summary-item.ok::after { background: var(--ok); }
     .summary-item.ok .n { color: var(--ok); }
     .summary-item.maybe { background: linear-gradient(135deg, #FFF6EA, #FFFAF1); border-color: #F5DFBE; }
+    .summary-item.maybe::after { background: var(--maybe); }
     .summary-item.maybe .n { color: var(--maybe); }
     .summary-item.no { background: linear-gradient(135deg, #FDF0F0, #FEF7F7); border-color: #F3D2D2; }
+    .summary-item.no::after { background: var(--no); }
     .summary-item.no .n { color: var(--no); }
+    .summary-item .jump-hint {
+      font-size: 10px; color: #A0AAB8; margin-top: 2px; opacity: 0; transition: opacity 0.18s;
+    }
+    .summary-item:hover .jump-hint { opacity: 1; }
     .empty-tip { text-align: center; color: #9AA7B4; font-size: 14px; padding: 36px 0; }
+
+    /* 不符分类下的两个子方块 */
+    .sub-bar { display: flex; gap: 10px; margin: 4px 0 12px; }
+    .sub-item {
+      flex: 1; text-align: center; padding: 10px 6px 8px; border-radius: 12px;
+      background: #fff; border: 1px solid var(--line); cursor: pointer; transition: all 0.18s;
+      box-shadow: 0 2px 6px rgba(31,45,61,0.04); position: relative; overflow: hidden;
+    }
+    .sub-item:active { transform: scale(0.97); }
+    .sub-item::after { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .sub-item .n { font-size: 22px; font-weight: 800; line-height: 1.1; }
+    .sub-item .t { font-size: 12.5px; font-weight: 700; margin-top: 2px; }
+    .sub-item .hint { font-size: 10px; color: #A0AAB8; margin-top: 2px; }
+    .sub-item.cohort { background: linear-gradient(135deg, #EAF3FD, #F2F8FE); border-color: #BBD7F2; }
+    .sub-item.cohort::after { background: var(--blue); }
+    .sub-item.cohort .n { color: var(--blue); }
+    .sub-item.cohort .t { color: var(--blue-deep); }
+    .sub-item.real { background: linear-gradient(135deg, #FDF0F0, #FEF7F7); border-color: #F3D2D2; }
+    .sub-item.real::after { background: var(--no); }
+    .sub-item.real .n { color: var(--no); }
+    .sub-item.real .t { color: #B2453E; }
+    .sub-item.active { box-shadow: 0 0 0 2px currentColor; }
+    .sub-item.cohort.active { color: var(--blue); }
+    .sub-item.real.active { color: #B2453E; }
+
+
+    /* 收藏 */
+    .fav-btn {
+      position: absolute; right: 10px; bottom: 10px; width: 34px; height: 34px;
+      border-radius: 50%; border: 1px solid var(--line); background: #fff;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      font-size: 18px; line-height: 1; transition: all 0.18s; z-index: 2;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .fav-btn:hover { transform: scale(1.08); border-color: #F4C542; }
+    .fav-btn.active { background: #FFF9E6; border-color: #F4C542; }
+    .fav-btn .star { color: #C9CFD6; transition: color 0.18s; }
+    .fav-btn.active .star { color: #F4C542; }
+
+    /* 浮动时间线入口 */
+    .fab-timeline {
+      position: fixed; right: 14px; bottom: 22px; z-index: 90;
+      background: linear-gradient(135deg, var(--blue-deep), var(--blue));
+      color: #fff; border: none; border-radius: 50px; padding: 12px 18px;
+      font-size: 14px; font-weight: bold; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(27,58,160,0.34);
+      display: flex; align-items: center; gap: 6px;
+      transition: all 0.22s;
+    }
+    .fab-timeline:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(27,58,160,0.42); }
+    .fab-timeline .badge {
+      background: #fff; color: var(--blue-deep); font-size: 11px; font-weight: bold;
+      min-width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    }
+
+    /* 时间线弹窗 */
+    .timeline-modal { max-height: 92vh; }
+    .timeline-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #EDF1F6;
+    }
+    .timeline-title { font-size: 17px; font-weight: bold; color: var(--blue-deep); }
+    .timeline-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .timeline-actions button {
+      font-size: 12px; border: 1px solid var(--line); background: #fff; border-radius: 8px;
+      padding: 6px 10px; cursor: pointer; color: var(--ink-sub); transition: all 0.18s;
+    }
+    .timeline-actions button:hover { background: #F2F5F9; border-color: #C8D2E0; }
+    .timeline-chart-wrap {
+      background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px;
+      margin-bottom: 14px;
+    }
+    .timeline-axis-list { position: relative; padding-left: 22px; }
+    .timeline-axis-list::before {
+      content: ""; position: absolute; left: 6px; top: 8px; bottom: 8px;
+      width: 3px; border-radius: 3px; background: #E3E8F2;
+    }
+    .timeline-node {
+      position: relative; padding: 0 0 18px 18px;
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .timeline-node:last-child { padding-bottom: 0; }
+    .timeline-node .dot {
+      position: absolute; left: -19px; top: 2px; width: 14px; height: 14px;
+      border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 3px currentColor;
+      background: #fff; z-index: 1;
+    }
+    .timeline-node.ok .dot { color: var(--ok); }
+    .timeline-node.maybe .dot { color: var(--maybe); }
+    .timeline-node.no .dot { color: #C9CFD6; }
+    .timeline-node .date {
+      flex-shrink: 0; width: 64px; font-size: 12px; font-weight: bold;
+      color: var(--ink); line-height: 1.4; margin-top: 1px;
+    }
+    .timeline-node .date small {
+      display: block; font-size: 11px; color: var(--ink-sub); font-weight: normal;
+    }
+    .timeline-node .card {
+      flex: 1; min-width: 0; background: #F8FAFC; border: 1px solid var(--line);
+      border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: all 0.18s;
+    }
+    .timeline-node .card:hover { border-color: var(--blue); background: #fff; box-shadow: 0 4px 12px rgba(24,95,165,0.08); }
+    .timeline-node .card-title {
+      font-size: 14px; font-weight: bold; color: var(--ink);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px;
+    }
+    .timeline-node .card-meta {
+      font-size: 12px; color: var(--ink-sub); line-height: 1.5;
+    }
+    .timeline-node .card-status {
+      display: inline-block; font-size: 11px; font-weight: bold;
+      padding: 1px 7px; border-radius: 999px; color: #fff; margin-left: 6px;
+    }
+    .timeline-node.ok .card-status { background: var(--ok); }
+    .timeline-node.maybe .card-status { background: var(--maybe); }
+    .timeline-node.no .card-status { background: #C9CFD6; }
+    .timeline-node .card-actions {
+      display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;
+    }
+    .timeline-node .card-actions a, .timeline-node .card-actions button {
+      font-size: 12px; padding: 4px 8px; border-radius: 6px; text-decoration: none;
+      border: 1px solid var(--line); background: #fff; color: var(--blue); cursor: pointer; transition: all 0.18s;
+    }
+    .timeline-node .card-actions a:hover, .timeline-node .card-actions button:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .timeline-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--ink-sub); margin-bottom: 12px; }
+    .timeline-legend span { display: inline-flex; align-items: center; gap: 4px; }
+    .timeline-legend i { width: 12px; height: 12px; border-radius: 3px; }
+    .fav-list { max-height: 340px; overflow-y: auto; }
+    .fav-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      background: #fff; border: 1px solid var(--line); border-radius: 12px;
+      margin-bottom: 8px; cursor: pointer; transition: all 0.18s;
+    }
+    .fav-item:hover { border-color: var(--blue); }
+    .fav-item .fav-status { flex-shrink: 0; font-size: 11px; padding: 2px 8px; border-radius: 999px; color: #fff; font-weight: bold; }
+    .fav-item .fav-status.ok { background: var(--ok); }
+    .fav-item .fav-status.maybe { background: var(--maybe); }
+    .fav-item .fav-status.no { background: #C9CFD6; }
+    .fav-item .fav-status.ended { background: #8A97A5; }
+    .fav-item .fav-info { flex: 1; min-width: 0; }
+    .fav-item .fav-title { font-size: 14px; font-weight: bold; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fav-item .fav-sub { font-size: 12px; color: var(--ink-sub); }
+    .fav-item .fav-del { color: #C9CFD6; cursor: pointer; font-size: 18px; padding: 4px; }
+    .fav-item .fav-del:hover { color: var(--no); }
 
     /* 弹窗 */
     .modal-overlay {
@@ -420,12 +615,12 @@
       font-weight: bold; letter-spacing: 0.5px;
     }
     .modal-link {
-      display: block; margin-top: 18px; padding: 12px 16px;
+      display: inline-block; padding: 10px 16px;
       background: linear-gradient(135deg, var(--blue), var(--blue-bright));
-      color: #fff; border-radius: 12px; text-align: center;
-      text-decoration: none; font-size: 15px; font-weight: bold;
+      color: #fff !important; border-radius: 10px; text-align: center;
+      text-decoration: none; font-size: 14px; font-weight: bold;
       box-shadow: 0 4px 12px rgba(24,95,165,0.3);
-      transition: all 0.2s;
+      transition: all 0.2s; border: none;
     }
     .modal-link:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(24,95,165,0.4); }
 
@@ -448,6 +643,11 @@
     .modal-links { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
     .modal-link { font-size:13px; color:var(--blue); text-decoration:none; border:1px solid var(--blue); border-radius:6px; padding:5px 10px; }
     .modal-link:hover { background:var(--blue); color:#fff; }
+    .group-highlight { animation: groupPulse 1.2s ease; }
+    @keyframes groupPulse {
+      0% { background: rgba(43,92,230,0.08); }
+      100% { background: transparent; }
+    }
     @media (max-width: 640px) {
       .header h1 { font-size:20px; }
       .header p { font-size:12.5px; }
@@ -461,6 +661,9 @@
       .disclaimer #dataUpdated { display:block; margin-top:3px; }
       .job-title { font-size:14px; }
       .summary { font-size:13px; }
+      .summary-item .n { font-size:22px; }
+      .summary-item .t { font-size:11px; }
+      .fab-timeline { padding: 10px 14px; font-size:13px; right: 10px; bottom: 16px; }
     }
   </style>
 
@@ -540,6 +743,16 @@
           <label><input type="radio" name="degree" value="硕士"> 硕士</label>
         </div>
         <div class="hint">浙江教师编制岗基本都要求本科起步，硕士可报岗位更多、不少地区还放宽户籍。</div>
+      </div>
+
+      <div class="form-group" id="masterTypeBox" style="display:none;">
+        <label>硕士类型（选填）</label>
+        <div class="options" id="masterType">
+          <label><input type="radio" name="masterType" value="学硕"> 学术型硕士（学硕）</label>
+          <label><input type="radio" name="masterType" value="专硕"> 专业型硕士（专硕）</label>
+          <label><input type="radio" name="masterType" value=""> 不确定/不限</label>
+        </div>
+        <div class="hint">浙江绝大多数岗不区分学硕/专硕，只认「硕士+专业对口」。仅少数岗位（如要求「学科教学/小学教育专硕」）偏好专硕，这类会在结果标「待确认」。</div>
       </div>
 
       <div class="form-group">
@@ -812,12 +1025,18 @@
         <option value="early">提前批/校招</option>
         <option value="social">社招统考</option>
       </select>
-      <span style="display:flex;align-items:center;gap:8px;white-space:nowrap;">只看可报
-        <label class="switch">
-          <input type="checkbox" id="onlyOk">
-          <span class="slider"></span>
-        </label>
-      </span>
+    </div>
+    <div class="filter-bar" style="gap:12px;">
+      <select id="masterFilter" style="width:auto;flex:1;margin-bottom:0;padding:8px 10px;font-size:14px;">
+        <option value="">学历要求不限</option>
+        <option value="need">要求硕士及以上</option>
+        <option value="none">不要求硕士（本科可报）</option>
+      </select>
+      <select id="honorFilter" style="width:auto;flex:1;margin-bottom:0;padding:8px 10px;font-size:14px;">
+        <option value="">荣誉门槛不限</option>
+        <option value="yes">有荣誉/奖学金门槛</option>
+        <option value="no">无荣誉门槛</option>
+      </select>
     </div>
 
     <div class="card round" style="padding:16px;">
@@ -850,6 +1069,44 @@
       </div>
     </div>
   </div>
+
+  <!-- 收藏/报考时间线弹窗 -->
+  <div class="modal-overlay" id="timelineModal" onclick="closeTimelineModal(event)">
+    <div class="modal timeline-modal" onclick="event.stopPropagation()">
+      <div class="timeline-head">
+        <div class="timeline-title">我的收藏 · 报考时间线</div>
+        <button class="modal-close" onclick="closeTimelineModal()">×</button>
+      </div>
+      <div class="timeline-legend">
+        <span><i style="background:var(--ok)"></i>可报</span>
+        <span><i style="background:var(--maybe)"></i>待确认</span>
+        <span><i style="background:#C9CFD6"></i>不符</span>
+        <span style="margin-left:auto;">按公告报名截止日期排序</span>
+      </div>
+      <div class="timeline-actions">
+        <button onclick="clearFavorites()">清空收藏</button>
+      </div>
+      <div class="timeline-chart-wrap" id="timelineChartWrap">
+        <div class="empty-tip" style="padding:24px 0;">暂无收藏岗位<br>在匹配结果卡片右下角点 ☆ 收藏</div>
+      </div>
+      <div class="fav-list" id="favList"></div>
+    </div>
+  </div>
+
+  <!-- 浮动时间线入口 -->
+  <button class="fab-timeline" onclick="openTimelineModal()">
+    <span>📅</span>
+    <span>报考时间线</span>
+    <span class="badge" id="favCount">0</span>
+  </button>
+
+  <div class="site-foot">
+    <div>© 2026 浙江教师招聘智能匹配 · 数据整理自各地教育局公开招聘公告 · 仅供个人参考，结果转请至原公告</div>
+    <div class="site-foot-stat">
+      累计访问 <span id="busuanzi_value_site_pv">0</span> · 访客 <span id="busuanzi_value_site_uv">0</span>
+    </div>
+  </div>
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
   <script src="data.js"></script>
   <script src="match.js"></script>
@@ -966,7 +1223,8 @@
     }
     document.getElementById("cityFilter").addEventListener("change", runMatch);
     document.getElementById("batchFilter").addEventListener("change", runMatch);
-    document.getElementById("onlyOk").addEventListener("change", runMatch);
+    document.getElementById("masterFilter").addEventListener("change", runMatch);
+    document.getElementById("honorFilter").addEventListener("change", runMatch);
 
     // ========== 专业（选"其他"显示自定义输入框；选"小学教育"显示方向选择） ==========
     document.querySelectorAll('input[name="major"]').forEach(r => {
@@ -993,6 +1251,7 @@
         const isMaster = (this.value === "硕士" && this.checked);
         document.getElementById("bachelorMajorBox").style.display = isMaster ? "block" : "none";
         document.getElementById("bachelorSchoolBox").style.display = isMaster ? "block" : "none";
+        document.getElementById("masterTypeBox").style.display = isMaster ? "block" : "none";
         const lbl = document.getElementById("majorLabel");
         if (lbl) lbl.textContent = isMaster ? "硕士专业（决定你能报哪个学科方向）" : "专业（决定你能报哪个学科方向）";
         const sl = document.getElementById("schoolTypeLabel");
@@ -1052,6 +1311,7 @@
       return {
         graduateYear: document.querySelector('input[name="graduateYear"]:checked')?.value || "",
         degree: document.querySelector('input[name="degree"]:checked')?.value || "",
+        degreeType: document.querySelector('input[name="masterType"]:checked')?.value || "",
         schoolType: document.querySelector('input[name="schoolType"]:checked')?.value || "",
         bachelorSchoolType: document.querySelector('input[name="bachelorSchoolType"]:checked')?.value || "",
         normalMajor: document.querySelector('input[name="normalMajor"]:checked')?.value || "",
@@ -1117,6 +1377,34 @@
       return c;
     }
 
+    // ========== 报名新鲜度判定 ==========
+    // enroll 字段格式很杂（"详见公告""未查到""12月3日-12月10日"等），抠不出确切日期就返回 null
+    function parseDeadline(enroll) {
+      if (!enroll) return null;
+      const s = String(enroll);
+      const re = /(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日/g;
+      let m, year = null;
+      const dates = [];
+      while ((m = re.exec(s)) !== null) {
+        if (m[1]) year = parseInt(m[1], 10);
+        if (!year) continue;
+        dates.push(new Date(year, parseInt(m[2], 10) - 1, parseInt(m[3], 10)));
+      }
+      if (!dates.length) return null;
+      // 跨年修正：后一个日期早于前一个，说明跨年了（如 2025年12月25日-1月5日）
+      for (let i = 1; i < dates.length; i++) {
+        if (dates[i] < dates[i - 1]) {
+          dates[i] = new Date(dates[i].getFullYear() + 1, dates[i].getMonth(), dates[i].getDate());
+        }
+      }
+      return dates.reduce((a, b) => (b > a ? b : a));
+    }
+
+    function startOfToday() {
+      const d = new Date();
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+
     function runMatch() {
       if (typeof JOBS === "undefined" || typeof matchJobs === "undefined") return;
       const profile = getProfile();
@@ -1133,23 +1421,27 @@
         return;
       }
 
-      // 结果筛选：城市 + 批次 + 只看可报
+      // 结果筛选：城市 + 批次
       const cityFilter = document.getElementById("cityFilter").value;
       const batchFilter = document.getElementById("batchFilter").value;
-      const onlyOk = document.getElementById("onlyOk").checked;
+      const masterFilter = document.getElementById("masterFilter").value;
+      const honorFilter = document.getElementById("honorFilter").value;
       let shown = result;
       if (cityFilter) shown = shown.filter(x => x.city === cityFilter);
       if (batchFilter === "early") shown = shown.filter(x => x.early);
       if (batchFilter === "social") shown = shown.filter(x => !x.early);
-      if (onlyOk) shown = shown.filter(x => x.status === "可报");
-      const filtering = !!(cityFilter || batchFilter || onlyOk);
+      if (masterFilter === "need") shown = shown.filter(x => x.rules && x.rules.needMaster === true);
+      if (masterFilter === "none") shown = shown.filter(x => !(x.rules && x.rules.needMaster === true));
+      if (honorFilter === "yes") shown = shown.filter(x => x.rules && x.rules.honorGate);
+      if (honorFilter === "no") shown = shown.filter(x => !(x.rules && x.rules.honorGate));
+      const filtering = !!(cityFilter || batchFilter || masterFilter || honorFilter);
 
       const ok = shown.filter(x => x.status === "可报");
       const maybe = shown.filter(x => x.status === "待确认");
       const no = shown.filter(x => x.status === "不符");
 
       if (shown.length === 0) {
-        resultArea.innerHTML = `<div class="empty-tip">当前筛选条件下没有岗位<br>试试换成"全部城市"/"全部批次"或关掉"只看可报"</div>`;
+        resultArea.innerHTML = `<div class="empty-tip">当前学段暂无岗位数据<br>其他学段数据后续补充</div>`;
         return;
       }
 
@@ -1160,16 +1452,47 @@
         html += `<div class="job-note" style="background:#FFF8E1;border:1px solid #F5E1A4;border-radius:8px;padding:8px 10px;">📌 你填写的其他条件：${esc(otherCond)}——请对每个岗位的公告原文逐条核对</div>`;
       }
       html += `<div class="summary-bar">
-        <div class="summary-item ok"><div class="n">${ok.length}</div><div class="t">✅ 可报</div></div>
-        <div class="summary-item maybe"><div class="n">${maybe.length}</div><div class="t">⚠️ 待确认</div></div>
-        <div class="summary-item no"><div class="n">${no.length}</div><div class="t">❌ 不符</div></div>
+        <div class="summary-item ok ${statusFilter === 'ok' ? 'active' : ''}" onclick="setStatusFilter('ok')" style="color:var(--ok)"><div class="n">${ok.length}</div><div class="t">✅ 可报</div><div class="jump-hint">点击切换</div></div>
+        <div class="summary-item maybe ${statusFilter === 'maybe' ? 'active' : ''}" onclick="setStatusFilter('maybe')" style="color:var(--maybe)"><div class="n">${maybe.length}</div><div class="t">⚠️ 待确认</div><div class="jump-hint">点击切换</div></div>
+        <div class="summary-item no ${statusFilter === 'no' ? 'active' : ''}" onclick="setStatusFilter('no')" style="color:var(--no)"><div class="n">${no.length}</div><div class="t">❌ 不符</div><div class="jump-hint">点击切换</div></div>
       </div>`;
       if (filtering) {
         html += `<div class="summary" style="font-size:12px;color:#8A97A5;margin:-6px 0 12px;">（已从 ${result.length} 条岗位中筛选）</div>`;
       }
 
-      if (ok.length === 0 && shown.length > 0) {
-        html += `<div class="empty-tip" style="border:1px dashed var(--line);color:var(--ink-sub);padding:18px 12px;line-height:1.7">本学段暂无可报岗位。建议：①切换其他学段 ②关掉"只看可报"看待确认岗 ③扩大城市范围 ④核对教资与专业是否对口</div>`;
+      let listHtml = "";
+      if (statusFilter === 'no') {
+        // 「不符」拆两个子模块：仅届别不符（条件符合·参考）/ 条件不符
+        const noCohort = no.filter(x => x.cohortOnly);
+        const noReal = no.filter(x => !x.cohortOnly);
+        if (noCohort.length === 0 && noReal.length === 0) {
+          listHtml = `<div class="empty-tip" style="border:1px dashed var(--line);color:var(--ink-sub);padding:18px 12px;line-height:1.7">本学段暂无不符岗位。说明当前条件下岗位要么可报、要么待确认。</div>`;
+        } else {
+          // 两个可点击方块：点哪个只看哪一类
+          listHtml += `<div class="sub-bar">
+            <div class="sub-item cohort ${noSubFilter === 'cohort' ? 'active' : ''}" onclick="setNoSubFilter('cohort')">
+              <div class="n">${noCohort.length}</div><div class="t">📋 条件符合</div><div class="hint">${noSubFilter === 'cohort' ? '✓ 只看此类' : '点击只看此类'}</div>
+            </div>
+            <div class="sub-item real ${noSubFilter === 'real' ? 'active' : ''}" onclick="setNoSubFilter('real')">
+              <div class="n">${noReal.length}</div><div class="t">❌ 条件不符</div><div class="hint">${noSubFilter === 'real' ? '✓ 只看此类' : '点击只看此类'}</div>
+            </div>
+          </div>`;
+          const showCohort = (noSubFilter === 'all' || noSubFilter === 'cohort');
+          const showReal = (noSubFilter === 'all' || noSubFilter === 'real');
+          if (showCohort && noCohort.length) listHtml += `<div class="sub-group-title"><span class="dot cohort"></span>仅届别不符（其余条件均符合，可作参考样本）· ${noCohort.length} 条</div>` + noCohort.map(card).join("");
+          if (showReal && noReal.length) listHtml += `<div class="sub-group-title"><span class="dot real"></span>条件不符 · ${noReal.length} 条</div>` + noReal.map(card).join("");
+        }
+      } else {
+        const activeList = statusFilter === 'ok' ? ok : maybe;
+        if (activeList.length === 0) {
+          const tips = {
+            ok: "本学段暂无可报岗位。建议：①切换「待确认」看看风险点 ②切换其他学段 ③扩大城市/批次范围 ④核对教资与专业是否对口",
+            maybe: "本学段暂无待确认岗位。说明当前条件下岗位要么完全符合、要么硬性不符。"
+          };
+          listHtml = `<div class="empty-tip" style="border:1px dashed var(--line);color:var(--ink-sub);padding:18px 12px;line-height:1.7">${tips[statusFilter]}</div>`;
+        } else {
+          listHtml = activeList.map(card).join("");
+        }
       }
 
       function confBadge(job) {
@@ -1179,11 +1502,11 @@
         return "";
       }
       function card(job) {
-        const cls = job.status === "可报" ? "ok" : job.status === "待确认" ? "maybe" : "no";
+        const cls = job.cohortOnly ? "cohort" : job.status === "可报" ? "ok" : job.status === "待确认" ? "maybe" : "no";
         const badge = job.early ? '<span class="badge-early">提前批</span>' : "";
         const yearBadge = job.year ? `<span class="badge-year">${job.year}届</span>` : "";
         const bianzhiBadge = /事业编|备案|员额|在编|全额/.test((job.staffing || "") + (job.batch || "")) ? '<span class="badge-bianzhi">编制</span>' : "";
-        const statusText = job.status === "可报" ? "✅ 可报" : job.status === "待确认" ? "⚠️ 待确认" : "❌ 不符";
+        const statusText = job.cohortOnly ? "📋 仅届别不符" : job.status === "可报" ? "✅ 可报" : job.status === "待确认" ? "⚠️ 待确认" : "❌ 不符";
         const subjLine = (job.subjects && job.subjects.length) ? ` · 岗位学科：${job.subjects.join("、")}` : "";
         const attLink = job.attachmentUrl
           ? `<a class="job-att" href="${job.attachmentUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📎 原公告附件</a>`
@@ -1195,7 +1518,11 @@
         const hitBar = (job.status === "可报" && hitNote)
           ? `<div class="job-hit">✓ ${esc(hitNote.replace("资格已达标：", ""))}</div>` : "";
         const riskBar = (job.risks || []).slice(0, 2).map(r => `<div class="job-tip">⚠️ ${esc(r)}</div>`).join("");
-        const reasonBar = (job.reasons || []).slice(0, 2).map(r => `<div class="job-reason">❌ ${esc(r)}</div>`).join("");
+        const reasonBar = job.cohortOnly
+          ? `<div class="job-cohort">📋 仅届别不符：公告面向更早届别（您这届尚未到该批次报名）；经核对户籍/学历/专业/教资等条件您均符合，可作报考参考样本</div>`
+          : (job.reasons || []).slice(0, 2).map(r => `<div class="job-reason">❌ ${esc(r)}</div>`).join("");
+        const favCls = isFav(job.id) ? "active" : "";
+        const favStar = isFav(job.id) ? "★" : "☆";
         return `
           <div class="job-card ${cls}" onclick="openDetail(${job.id})">
             <div class="job-title">
@@ -1212,36 +1539,197 @@
               ${attLink}
               <span class="job-more">查看详情 ›</span>
             </div>
+            <button class="fav-btn ${favCls}" title="收藏/取消收藏" onclick="toggleFav(event, ${job.id})"><span class="star">${favStar}</span></button>
             ${warnBar}
           </div>
         `;
       }
 
-      html += ok.map(card).join("");
-      if (maybe.length) {
-        html += `<div class="group-toggle" onclick="toggleGroup(this,'maybe')">▸ 待确认 ${maybe.length} 条（点击展开）</div><div class="group-body" id="grp-maybe" style="display:none">${maybe.map(card).join("")}</div>`;
-      }
-      if (no.length) {
-        html += `<div class="group-toggle" onclick="toggleGroup(this,'no')">▸ 不符 ${no.length} 条（点击展开）</div><div class="group-body" id="grp-no" style="display:none">${no.map(card).join("")}</div>`;
-      }
+      html += listHtml;
       resultArea.innerHTML = html;
     }
 
     document.getElementById("bianzhiOnly").addEventListener("change", runMatch);
 
-    // ========== 分组折叠 ==========
-    function toggleGroup(btn, name) {
-      const el = document.getElementById("grp-" + name);
-      if (!el) return;
-      const hidden = el.style.display === "none";
-      el.style.display = hidden ? "block" : "none";
-      const label = name === "maybe" ? "待确认" : "不符";
-      btn.textContent = (hidden ? "▾ " : "▸ ") + label + " " + el.children.length + " 条（" + (hidden ? "点击收起" : "点击展开") + "）";
+    // ========== 状态筛选标签 ==========
+    let statusFilter = 'ok';
+    let noSubFilter = 'all';  // all / cohort / real
+    function setStatusFilter(name) {
+      statusFilter = name;
+      if (name !== 'no') noSubFilter = 'all';
+      runMatch();
+    }
+    function setNoSubFilter(name) {
+      noSubFilter = (noSubFilter === name) ? 'all' : name;  // 再次点击取消，回到全部
+      runMatch();
+    }
+
+    // ========== 收藏 ==========
+    let favJobs = [];
+    function loadFav() {
+      try {
+        const raw = localStorage.getItem("favJobs");
+        favJobs = raw ? JSON.parse(raw) : [];
+      } catch (e) { favJobs = []; }
+      if (!Array.isArray(favJobs)) favJobs = [];
+      updateFavBadge();
+    }
+    function saveFav() {
+      localStorage.setItem("favJobs", JSON.stringify(favJobs));
+      updateFavBadge();
+    }
+    function isFav(id) {
+      return favJobs.some(x => x.id === id);
+    }
+    function toggleFav(event, id) {
+      event.stopPropagation();
+      const job = lastResult.find(j => j.id === id);
+      if (!job) return;
+      const idx = favJobs.findIndex(x => x.id === id);
+      if (idx >= 0) {
+        favJobs.splice(idx, 1);
+      } else {
+        favJobs.push({
+          id: id,
+          title: job.title || `${job.city} ${job.district || ""} · ${job.batch}`,
+          city: job.city,
+          district: job.district || "",
+          batch: job.batch,
+          status: job.status,
+          stage: job.stage,
+          enroll: job.enroll || "",
+          url: job.url || "",
+          addedAt: Date.now()
+        });
+      }
+      saveFav();
+      // 重绘当前学段结果里的收藏状态
+      runMatch();
+      // 如果时间线弹窗开着，刷新它
+      if (document.getElementById("timelineModal").classList.contains("show")) renderTimeline();
+    }
+    function removeFav(event, id) {
+      event.stopPropagation();
+      const idx = favJobs.findIndex(x => x.id === id);
+      if (idx >= 0) {
+        favJobs.splice(idx, 1);
+        saveFav();
+        runMatch();
+        renderTimeline();
+      }
+    }
+    function clearFavorites() {
+      if (!confirm("确定清空全部收藏？")) return;
+      favJobs = [];
+      saveFav();
+      runMatch();
+      renderTimeline();
+    }
+    function updateFavBadge() {
+      const el = document.getElementById("favCount");
+      if (el) {
+        el.textContent = favJobs.length;
+        el.style.display = favJobs.length ? "flex" : "none";
+      }
+    }
+
+    // 解析单个报名截止日期（取最晚一个）
+    function parseEndDate(enroll) {
+      const text = String(enroll || "");
+      const dates = [];
+      const re = /(\d{4})年(\d{1,2})月(\d{1,2})日/g;
+      let m;
+      while ((m = re.exec(text)) !== null) {
+        dates.push(new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10)));
+      }
+      if (!dates.length) return null;
+      // 跨年修正
+      for (let i = 1; i < dates.length; i++) {
+        if (dates[i] < dates[i - 1]) {
+          dates[i] = new Date(dates[i].getFullYear() + 1, dates[i].getMonth(), dates[i].getDate());
+        }
+      }
+      return dates.reduce((a, b) => (b > a ? b : a));
+    }
+
+    function openTimelineModal() {
+      renderTimeline();
+      document.getElementById("timelineModal").classList.add("show");
+    }
+    function closeTimelineModal(e) {
+      if (!e || e.target.id === "timelineModal" || e.target.tagName === "BUTTON" || e.target.classList.contains("modal-close")) {
+        document.getElementById("timelineModal").classList.remove("show");
+      }
+    }
+
+    function renderTimeline() {
+      const wrap = document.getElementById("timelineChartWrap");
+      const list = document.getElementById("favList");
+      if (!favJobs.length) {
+        wrap.innerHTML = `<div class="empty-tip" style="padding:24px 0;">暂无收藏岗位<br>在匹配结果卡片右上角点 ☆ 收藏</div>`;
+        list.innerHTML = "";
+        return;
+      }
+      // 按报名截止日期排序，无日期放最后
+      const sorted = [...favJobs].map(f => {
+        const end = parseEndDate(f.enroll);
+        return { ...f, endDate: end, endTs: end ? end.getTime() : Infinity };
+      }).sort((a, b) => a.endTs - b.endTs);
+
+      // 渲染列表
+      list.innerHTML = sorted.map(f => {
+        const cls = f.status === "可报" ? "ok" : f.status === "待确认" ? "maybe" : "no";
+        const dateStr = f.endDate ? `${f.endDate.getFullYear()}-${String(f.endDate.getMonth() + 1).padStart(2, "0")}-${String(f.endDate.getDate()).padStart(2, "0")}` : "时间待确认";
+        return `<div class="fav-item" onclick="openDetail(${f.id})">
+          <span class="fav-status ${cls}">${f.status.replace(/[✅⚠️❌]/g, "").trim()}</span>
+          <div class="fav-info">
+            <div class="fav-title">${esc(f.title)}</div>
+            <div class="fav-sub">${esc(f.city)} ${esc(f.district)} · ${f.batch} · 截止 ${dateStr}</div>
+          </div>
+          <span class="fav-del" title="取消收藏" onclick="removeFav(event, ${f.id})">×</span>
+        </div>`;
+      }).join("");
+
+      // 渲染垂直时间轴（按报名截止日期排序）
+      const withDate = sorted.filter(f => f.endDate);
+      if (!withDate.length) {
+        wrap.innerHTML = `<div class="empty-tip" style="padding:24px 0;">收藏岗位暂无明确报名截止日期，无法生成时间线</div>`;
+      } else {
+        const todayTs = startOfToday().getTime();
+        const nodes = withDate.map(f => {
+          const cls = f.status === "可报" ? "ok" : f.status === "待确认" ? "maybe" : "no";
+          const d = f.endDate;
+          const isPast = f.endTs < todayTs;
+          const dateLabel = `${d.getMonth() + 1}月${d.getDate()}日`;
+          const yearLabel = `${d.getFullYear()}年`;
+          const statusText = f.status.replace(/[✅⚠️❌]/g, "").trim();
+          const urlBtn = f.url
+            ? `<a href="${f.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">查看公告</a>`
+            : "";
+          return `
+            <div class="timeline-node ${cls}">
+              <span class="dot"></span>
+              <div class="date">${dateLabel}<small>${yearLabel}${isPast ? "· 已截止" : ""}</small></div>
+              <div class="card" onclick="openDetail(${f.id})">
+                <div class="card-title">${esc(f.title)}<span class="card-status">${statusText}</span></div>
+                <div class="card-meta">${esc(f.city)} ${esc(f.district || "")} · ${f.batch}</div>
+                <div class="card-actions">
+                  ${urlBtn}
+                  <button onclick="removeFav(event, ${f.id})">取消收藏</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+        wrap.innerHTML = `<div class="timeline-axis-list">${nodes}</div>`;
+      }
     }
 
     // ========== 详情弹窗 ==========
     function openDetail(id) {
-      const job = lastResult.find(j => j.id === id);
+      let job = null;
+      if (typeof JOBS !== "undefined") job = JOBS.find(j => j.id === id);
+      if (!job && lastResult) job = lastResult.find(j => j.id === id);
       if (!job) return;
       document.getElementById("modalTitle").textContent = `${job.city} ${job.district || ""} · ${job.batch}`;
       document.getElementById("modalTitle2").textContent = job.title || "";
@@ -1385,6 +1873,7 @@
         } catch (e) { console.log("读取档案失败", e); }
       }
       // 按默认学段（小学）初始化教资显示区，再跑一次匹配
+      loadFav();
       switchStage(currentStage);
     });
   </script>
