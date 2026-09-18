@@ -369,6 +369,17 @@ function singleClauseHit(c, ab) {
     return ab.isNormal;
   }
 
+  // —— 泛化"荣誉"条款：用户拥有任意荣誉/奖学金即视为命中 ——
+  // 例："校级及以上荣誉""院校级荣誉""荣誉"等泛化写法，此前无法识别→误判待确认/不符
+  // 含"省/国家级/全国"时要求省级及以上荣誉，否则任意荣誉即可（OR 结构之一即过）
+  if (/荣誉/.test(c) && !/户籍|生源|学历|本科|硕士|博士|师范专业|师范院校/.test(c)) {
+    const needProvincial = /省|国家级|全国/.test(c);
+    const hasProv = ab.hasShengYouni || ab.hasShengzhengFu || ab.hasGuojiang || ab.hasGuoliZhi || (ab.maxHonor >= 4.5);
+    const hasAny = ab.maxHonor > 0 || ab.hasScholarship || ab.hasXiaoYouni || ab.hasShengYouni
+      || ab.hasGuoSkill || ab.hasShengSkill1 || ab.hasXueke1 || ab.hasAoKe || ab.hasGuoDaSai;
+    return needProvincial ? hasProv : hasAny;
+  }
+
   // 无法识别的条款 → null（交给调用方决定）
   return null;
 }
@@ -892,7 +903,10 @@ function matchJobs(profile, jobs, options) {
     }
 
     // 6.3 师范类专业门槛（个别地区限师范类才能报；浙江实际：本科通道常限师范类，硕士通道一般不限）
-    if (j.normalMajor && degreeRank <= 2) {
+    // 技能学科岗豁免：体育/音乐/美术等音体美岗位通常不卡师范类（按专业技能+教资招录），不触发本条
+    const SKILL_SUBJECTS = ['体育', '音乐', '美术'];
+    const isSkillOnlyPost = (j.subjects || []).length > 0 && (j.subjects || []).every(s => SKILL_SUBJECTS.includes(s));
+    if (j.normalMajor && degreeRank <= 2 && !isSkillOnlyPost) {
       if (profile.normalMajor === '师范类') score += 10;
       else if (profile.normalMajor === '非师范类') reasons.push('要求师范类专业（本科）');
       else risks.push('岗位要求师范类专业（本科），请确认你的专业是否属于师范类');
