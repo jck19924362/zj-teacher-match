@@ -1,11 +1,11 @@
-// 浙江省教师招聘数据（2026届公告为主，共209条；含2027届提前批3条：杭州高级中学、宁波鄞州、宁波高洽会）
-// 数据来源：各地教育局/政府官网公告及附件岗位表，检索整理 2026-08-31，附件核验 2026-09-01，2027届提前批动态更新 2026-09-04，提前批岗位 year 字段补全 2026-09-06
+// 浙江省教师招聘数据（2026届公告为主，共211条；含2027届提前批5条：杭州高级中学、宁波鄞州、宁波高洽会、长河第二高级中学、文理中学）
+// 数据来源：各地教育局/政府官网公告及附件岗位表，检索整理 2026-08-31，附件核验 2026-09-01，2027届提前批动态更新 2026-09-04，提前批岗位 year 字段补全 2026-09-06，2027届提前批补库（长河第二高级中学、文理中学）2026-09-23
 // 字段说明：
 //   attachmentUrl: 原公告附件（岗位表）直链；无附件则为公告页
 //   dataConfidence: official-attached=官方页且有附件核验 / official=官方页无附件 / third-party=第三方转载(以官方为准)
 //   verifiedNote: 已据附件岗位表核验的关键说明（含精确学科人数）
 // rules 同前（hukou/needMaster/schoolGate/honorGate/certLevel/audience/subjects/normalMajor/year）
-const DATA_UPDATED = "2026-09-06";
+const DATA_UPDATED = "2026-09-23";
 
 // 合作机构资料入口（软广位）：明确标注来源，绝不直接替换“查看原公告”官方链接
 // 等刘老师给到正式链接后，把 enabled 改为 true、填入 url 即可上线
@@ -4047,5 +4047,43 @@ const JOBS = [
     dataConfidence: "official",
     verifiedNote: "宁波市第二十八届高层次人才引进洽谈会预告（2026中国浙江·宁波人才科技周）。线下2026-09-20、线上2026-09-14至09-20，平台：宁波市人力资源综合服务平台(yoyg.nbhr.org.cn)。教育系统事业单位参会，为宁波2027届提前批首发渠道。具体学科岗位以各学校现场发布的校招公告为准，本平台将随各校公告发布逐条补充。",
     partnerUrl: "https://mp.weixin.qq.com/s/A93y1lflz_qLTyRY5Gp9nA",
-    partnerText: "高洽会考情解读（26届流程参考）" }
+    partnerText: "高洽会考情解读（26届流程参考）" },
+  {     id: 211,
+    city: "杭州市",
+    district: "市直属",
+    batch: "提前批/校招预告",
+    early: true,
+    stage: "高中",
+    year: 2027,
+    title: "杭州市长河第二高级中学2027届教师招聘预告（事业编）",
+    posts: "高中全学科教师（语文、数学、英语、物理、化学、生物、政治、历史、地理、通用技术、信息技术、音乐、美术、体育、心理健康）",
+    count: "约70名（招聘预告，具体人数以杭州市教育局正式公告为准）",
+    staffing: "事业编",
+    enroll: "投简历阶段（2026-09-18 南京大学宣讲；简历邮箱 503492819@qq.com）；正式报名以杭州市教育局公告为准",
+    exam: "校招考核：面试/试讲为主（以杭州市教育局正式公告为准）",
+    condition: "面向2027届应届；本科可报，专业对口；具体招聘条件以杭州市教育局招聘公告为准",
+    url: "https://www.jrzp.com/xiaozhaoView/4726666.shtml",
+    rules: { subjects: ["语文","数学","英语","物理","化学","生物","政治","历史","地理","通用技术","信息技术","音乐","美术","体育","心理健康"], stage: "高中", hukou: "none", needMaster: false, schoolGate: null, honorGate: null, certLevel: "none", normalMajor: null, audience: "fresh" },
+    attachmentUrl: "https://www.jrzp.com/xiaozhaoView/4726666.shtml",
+    dataConfidence: "third-party",
+    verifiedNote: "校招预告（非杭州市教育局正式公告）。杭州市长河第二高级中学为杭州市教育局直属公办高中，2027届首批招聘约70名事业编教师，面向全国、本科可报、专业对口；2026-09-18 南京大学宣讲，简历投递邮箱 503492819@qq.com。具体岗位表与招聘条件以杭州市教育局后续正式公告为准。" },
+  {     id: 212,
+    city: "杭州市",
+    district: "西湖区",
+    batch: "提前批/校招预告",
+    early: true,
+    stage: "初中",
+    year: 2027,
+    title: "杭州市文理中学2027届招聘公办编制教师公告（西湖区）",
+    posts: "初中语文、数学、英语、科学、社会",
+    count: "10人（语文2/数学2/英语2/科学2/社会2）",
+    staffing: "事业编",
+    enroll: "即日起邮箱投递（hzswlzx@qq.com）；2026-09-19 西湖区教育局浙大见面会、杭师大见面会收简历",
+    exam: "校招考核：简历筛选+面谈/试讲（以学校后续通知为准）",
+    condition: "应届（毕业研究生，或综合成绩排名前20%的优秀师范类本科毕业生）；本科须对应专业（汉语言文学/数学/英语/物理·化学·科学教育/历史·思政相关）；不限户籍；须适用教资（语文二甲、其余二乙）",
+    url: "https://career.zjnu.edu.cn/news/view/aid/433071/tag/jszp",
+    rules: { subjects: ["语文","数学","英语","科学","社会"], stage: "初中", hukou: "none", needMaster: false, schoolGate: null, honorGate: null, certLevel: "junior", normalMajor: true, audience: "fresh" },
+    attachmentUrl: "https://career.zjnu.edu.cn/news/view/aid/433071/tag/jszp",
+    dataConfidence: "official",
+    verifiedNote: "浙江师范大学就业信息网（career.zjnu.edu.cn，2026-09-12）。杭州市文理中学（西湖区公办初中）2027届招聘公办编制教师10人：语文2/数学2/英语2/科学2/社会2。本科须对应专业（汉语言文学/数学/英语/物理·化学·科学教育/历史·思政相关）；应届（研究生，或综合成绩排名前20%的优秀师范类本科毕业生）；不限户籍；须适用教资（语文二甲、其余二乙）。当前为校招预告/收简历阶段，后续以西湖区教育局正式公告为准。" }
 ];
