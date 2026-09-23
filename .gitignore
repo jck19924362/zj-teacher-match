@@ -5,3 +5,7 @@ node_modules/
 *.tmp
 test-*
 verify-*
+
+# 数据处理工具脚本（只留本地，不上传仓库）
+backfill-*
+fix-*
